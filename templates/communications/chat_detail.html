@@ -77,10 +77,6 @@
                     {% csrf_token %}
                     <div class="chat-input-row">
                         <textarea name="text" id="messageText" rows="2" placeholder="Введите сообщение..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendMessage();}"></textarea>
-                        <label for="attachment" class="btn btn-soft btn-icon" title="Прикрепить файл">
-                            <i class="fa-solid fa-paperclip"></i>
-                        </label>
-                        <input type="file" id="attachment" name="attachment">
                         <button type="button" onclick="sendMessage()" class="btn btn-primary btn-icon" title="Отправить">
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
@@ -175,12 +171,11 @@
 
         async function sendMessage() {
             const textInput = document.getElementById('messageText');
-            const attachmentInput = document.getElementById('attachment');
             const text = textInput.value.trim();
 
-            if (!text && !attachmentInput.files.length) return;
+            if (!text) return;
 
-            if (text && !attachmentInput.files.length && useWebSocket && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            if (useWebSocket && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
                 chatSocket.send(JSON.stringify({
                     'type': 'chat_message',
                     'text': text
@@ -193,9 +188,6 @@
                 const formData = new FormData();
                 formData.append('text', text);
                 formData.append('csrfmiddlewaretoken', csrfToken);
-                if (attachmentInput.files.length) {
-                    formData.append('attachment', attachmentInput.files[0]);
-                }
 
                 const response = await fetch(window.location.href, {
                     method: 'POST',
@@ -204,7 +196,6 @@
 
                 if (response.ok) {
                     textInput.value = '';
-                    attachmentInput.value = '';
                     window.location.reload();
                 } else {
                     const data = await response.text();
@@ -224,4 +215,3 @@
     </script>
 </body>
 </html>
-
