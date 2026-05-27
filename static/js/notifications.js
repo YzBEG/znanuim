@@ -38,7 +38,9 @@ function initNotificationCenter() {
     center.className = 'notification-center';
     center.innerHTML = `
         <button class="notification-button" type="button" aria-label="Уведомления">
-            <i class="fa-regular fa-bell"></i>
+            <svg class="notification-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none">
+                <path d="M15 17H9m9-1v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Zm-4 4a2 2 0 0 1-4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
             <span class="notification-badge" hidden>0</span>
         </button>
         <div class="notification-dropdown" hidden>
