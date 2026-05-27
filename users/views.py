@@ -18,7 +18,7 @@ def register_student(request):
         form = StudentRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, 'Добро пожаловать! Ваш аккаунт ученика создан.')
             return redirect('student_dashboard')
     else:
@@ -32,7 +32,7 @@ def register_tutor(request):
         form = TutorRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, 'Добро пожаловать! Теперь заполните анкету репетитора.')
             return redirect('tutor_profile_edit')
     else:

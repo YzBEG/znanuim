@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import User, StudentProfile
+from tutors.models import TutorProfile
 
 
 class StudentRegistrationForm(UserCreationForm):
@@ -53,4 +54,11 @@ class TutorRegistrationForm(UserCreationForm):
         
         if commit:
             user.save()
+            TutorProfile.objects.get_or_create(
+                user=user,
+                defaults={
+                    'price_per_hour': 1000,
+                    'verification_status': TutorProfile.VerificationStatus.PENDING,
+                },
+            )
         return user

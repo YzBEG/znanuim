@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function initNotificationCenter() {
     const headerActions = document.querySelector('.header-actions');
-    if (!headerActions || document.querySelector('.notification-center')) {
+    if (!headerActions || document.querySelector('.notification-center') || !document.body.dataset.authenticated) {
         return;
     }
 
