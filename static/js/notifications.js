@@ -25,6 +25,7 @@ function bootNotifications() {
         });
     });
 
+    initMobileHeaderMenu();
     initNotificationCenter();
 }
 
@@ -190,6 +191,35 @@ function initNotificationCenter() {
             }
         });
     }
+}
+
+function initMobileHeaderMenu() {
+    const header = document.querySelector('.site-header');
+    const headerInner = document.querySelector('.header-inner');
+    const headerActions = document.querySelector('.header-actions');
+
+    if (!header || !headerInner || !headerActions || header.querySelector('.mobile-menu-button')) {
+        return;
+    }
+
+    const menuButton = document.createElement('button');
+    menuButton.className = 'mobile-menu-button';
+    menuButton.type = 'button';
+    menuButton.setAttribute('aria-label', 'Открыть меню');
+    menuButton.setAttribute('aria-expanded', 'false');
+    menuButton.innerHTML = `
+        <span></span>
+        <span></span>
+        <span></span>
+    `;
+
+    headerInner.insertBefore(menuButton, headerActions);
+
+    menuButton.addEventListener('click', () => {
+        const isOpen = header.classList.toggle('is-menu-open');
+        menuButton.setAttribute('aria-expanded', String(isOpen));
+        menuButton.setAttribute('aria-label', isOpen ? 'Закрыть меню' : 'Открыть меню');
+    });
 }
 
 function getCookie(name) {

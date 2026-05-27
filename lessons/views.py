@@ -1,8 +1,10 @@
+import os
 from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -80,6 +82,16 @@ def manage_slots(request):
         for minute in (0, 30):
             time_options.append(f"{hour:02d}:{minute:02d}")
 
+    available_time_options_by_date = {}
+    for option in date_options:
+        available_times = []
+        for time_value in time_options:
+            slot_dt = datetime.strptime(f"{option['value']} {time_value}", "%Y-%m-%d %H:%M")
+            slot_dt = timezone.make_aware(slot_dt)
+            if slot_dt > timezone.now():
+                available_times.append(time_value)
+        available_time_options_by_date[option["value"]] = available_times
+
     # Получаем слоты на ближайшие 30 дней
     slots = AvailabilitySlot.objects.filter(
         tutor=profile,
@@ -92,6 +104,7 @@ def manage_slots(request):
         'today': today,
         'date_options': date_options,
         'time_options': time_options,
+        'available_time_options_by_date': available_time_options_by_date,
     }
     return render(request, 'lessons/manage_slots.html', context)
 
@@ -300,6 +313,29 @@ def upload_material(request, order_id):
         return redirect('lesson_materials', order_id=order_id)
     
     return render(request, 'lessons/upload_material.html', {'order': order})
+
+
+@login_required
+def download_material(request, material_id):
+    """Безопасное скачивание материала участниками урока."""
+    from .models import LessonMaterial
+
+    material = get_object_or_404(
+        LessonMaterial.objects.select_related("order", "order__student", "order__tutor"),
+        id=material_id,
+    )
+    order = material.order
+
+    if request.user not in [order.student, order.tutor]:
+        messages.error(request, 'Доступ запрещён')
+        return redirect('home')
+
+    if not material.file or not material.file.storage.exists(material.file.name):
+        messages.error(request, 'Файл недоступен. Загрузите материал повторно.')
+        return redirect('lesson_materials', order_id=order.id)
+
+    filename = os.path.basename(material.file.name)
+    return FileResponse(material.file.open('rb'), as_attachment=True, filename=filename)
 
 
 @login_required

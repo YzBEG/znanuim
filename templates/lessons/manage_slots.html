@@ -9,9 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
-    <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=2">
-    <script src="{% static 'js/notifications.js' %}?v=3" defer></script>
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=14">
+    <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
+    <script src="{% static 'js/notifications.js' %}?v=4" defer></script>
 </head>
 <body{% if user.is_authenticated %} data-authenticated="1"{% endif %}>
     <header class="site-header">
@@ -167,7 +167,13 @@
         </section>
     </main>
 
+    {{ available_time_options_by_date|json_script:"available-time-options" }}
     <script>
+        const availableTimeOptions = JSON.parse(document.getElementById('available-time-options').textContent);
+        const dateInput = document.getElementById('date');
+        const startInput = document.getElementById('start_time');
+        const endInput = document.getElementById('end_time');
+
         document.querySelectorAll('[data-soft-select]').forEach((select) => {
             const trigger = select.querySelector('button[aria-haspopup="listbox"]');
             const input = select.previousElementSibling;
@@ -194,9 +200,34 @@
                     if (select.matches('[data-time-start]')) {
                         setDefaultEndTime(option.dataset.value);
                     }
+                    if (input.id === 'date') {
+                        refreshTimeOptions();
+                    }
                 });
             });
         });
+
+        function refreshTimeOptions() {
+            const allowedTimes = availableTimeOptions[dateInput.value] || [];
+
+            document.querySelectorAll('[data-time-start] .soft-select-menu button').forEach((option) => {
+                const isAllowed = allowedTimes.includes(option.dataset.value);
+                option.disabled = !isAllowed;
+                option.hidden = !isAllowed;
+            });
+
+            document.querySelectorAll('[data-time-end] .soft-select-menu button').forEach((option) => {
+                option.disabled = false;
+                option.hidden = false;
+            });
+
+            const startTrigger = document.querySelector('[data-time-start] > button[aria-haspopup="listbox"]');
+            const endTrigger = document.querySelector('[data-time-end] > button[aria-haspopup="listbox"]');
+            startInput.value = '';
+            endInput.value = '';
+            startTrigger.textContent = allowedTimes.length ? 'Выберите время' : 'Нет доступного времени';
+            endTrigger.textContent = 'Выберите время';
+        }
 
         document.addEventListener('click', (event) => {
             if (event.target.closest('[data-soft-select]')) {
@@ -210,7 +241,6 @@
         });
 
         function setDefaultEndTime(startValue) {
-            const endInput = document.getElementById('end_time');
             const endSelect = document.querySelector('[data-time-end]');
             const endTrigger = endSelect.querySelector('button[aria-haspopup="listbox"]');
             const [hours, minutes] = startValue.split(':').map(Number);
@@ -231,6 +261,8 @@
                 alert('Выберите время начала и окончания занятия.');
             }
         });
+
+        refreshTimeOptions();
     </script>
 </body>
 </html>

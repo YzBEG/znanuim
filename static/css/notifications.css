@@ -186,7 +186,68 @@
   line-height: 1.45;
 }
 
+.mobile-menu-button {
+  display: none;
+  place-items: center;
+  gap: 4px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: #10367d;
+  background: #ffffff;
+  border: 1px solid #cfd8e6;
+  border-radius: 15px;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(16, 54, 125, 0.08);
+}
+
+.mobile-menu-button span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 999px;
+}
+
 @media (max-width: 760px) {
+  .site-header .header-inner {
+    position: relative;
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .mobile-menu-button {
+    display: grid;
+    justify-self: end;
+  }
+
+  .site-header .main-nav,
+  .site-header .header-actions {
+    grid-column: 1 / -1;
+    display: none !important;
+    width: 100%;
+  }
+
+  .site-header.is-menu-open .main-nav,
+  .site-header.is-menu-open .header-actions {
+    display: grid !important;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .site-header.is-menu-open .main-nav {
+    justify-items: stretch;
+  }
+
+  .site-header.is-menu-open .main-nav a,
+  .site-header.is-menu-open .header-actions .btn,
+  .site-header.is-menu-open .header-actions > a,
+  .site-header.is-menu-open .header-actions > button {
+    width: 100%;
+    justify-content: center;
+  }
+
   .header-actions .notification-center,
   .header-actions .notification-button {
     width: 100%;

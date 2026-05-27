@@ -12,5 +12,6 @@ urlpatterns = [
     path('orders/<int:order_id>/call/', views.video_lesson, name='video_lesson'),
     path('orders/<int:order_id>/materials/', views.lesson_materials, name='lesson_materials'),
     path('orders/<int:order_id>/upload/', views.upload_material, name='upload_material'),
+    path('materials/<int:material_id>/download/', views.download_material, name='download_material'),
     path('my-students/', views.my_students, name='my_students'),
 ]

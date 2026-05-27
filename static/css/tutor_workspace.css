@@ -860,6 +860,10 @@ textarea {
   outline: 0;
 }
 
+.soft-select-menu button:disabled {
+  display: none;
+}
+
 .form-field textarea {
   min-height: 150px;
   resize: vertical;
