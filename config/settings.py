@@ -209,6 +209,8 @@ if REDIS_URL:
         }
     }
 
+EXTERNAL_MEETING_BASE_URL = os.environ.get('EXTERNAL_MEETING_BASE_URL', 'https://telemost.yandex.ru')
+
 
 # Production security. Enable these automatically when DEBUG=False.
 if not DEBUG:

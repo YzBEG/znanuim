@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
@@ -343,11 +345,13 @@ def video_lesson(request, order_id):
         order=order,
         defaults={"room_name": f"lesson-{order.id}"},
     )
+    meeting_url = settings.EXTERNAL_MEETING_BASE_URL.rstrip('/')
 
     return render(request, 'lessons/video_room.html', {
         'order': order,
         'session': session,
         'is_tutor': request.user == order.tutor,
+        'meeting_url': meeting_url,
     })
 
 
