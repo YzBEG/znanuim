@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+function bootNotifications() {
     const messages = document.querySelectorAll('.message');
 
     messages.forEach(function(message, index) {
@@ -26,7 +26,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     initNotificationCenter();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootNotifications);
+} else {
+    bootNotifications();
+}
 
 function initNotificationCenter() {
     const headerActions = document.querySelector('.header-actions');
