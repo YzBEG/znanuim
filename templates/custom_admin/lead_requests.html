@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Заявки с сайта — Znanium Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a href="{% url 'home' %}" class="brand">Znanium Admin</a>
+            <div class="header-actions">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-ghost">Панель</a>
+                <a href="{% url 'moderation_dashboard' %}" class="btn btn-ghost">Модерация</a>
+                <a href="{% url 'lead_requests' %}" class="btn btn-primary">Заявки</a>
+                <a href="/admin/" class="btn btn-ghost">Django Admin</a>
+                <a href="{% url 'logout' %}" class="btn btn-soft">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Заявки</span>
+                <h1>Заявки с сайта</h1>
+                <p>Все обращения из формы подбора репетитора на главной странице.</p>
+            </div>
+        </section>
+
+        <section class="shell">
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="stats-grid moderation-stats">
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-inbox"></i></div>
+                    <span>Всего</span>
+                    <strong>{{ total_count }}</strong>
+                    <small>заявок получено</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+                    <span>Новые</span>
+                    <strong>{{ new_count }}</strong>
+                    <small>ещё не обработаны</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-spinner"></i></div>
+                    <span>В работе</span>
+                    <strong>{{ in_progress_count }}</strong>
+                    <small>идёт подбор</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-check"></i></div>
+                    <span>Закрыты</span>
+                    <strong>{{ closed_count }}</strong>
+                    <small>работа завершена</small>
+                </article>
+            </div>
+
+            <article class="workspace-card">
+                <form method="get" class="lead-filter-form">
+                    <div class="form-field">
+                        <label for="status">Статус</label>
+                        <select id="status" name="status">
+                            <option value="">Все</option>
+                            <option value="new" {% if request.GET.status == 'new' %}selected{% endif %}>Новые</option>
+                            <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>В обработке</option>
+                            <option value="contacted" {% if request.GET.status == 'contacted' %}selected{% endif %}>Связались</option>
+                            <option value="closed" {% if request.GET.status == 'closed' %}selected{% endif %}>Закрыты</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="search">Поиск</label>
+                        <input id="search" type="text" name="search" value="{{ request.GET.search }}" placeholder="Имя, телефон, предмет">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> Фильтр</button>
+                    <a href="{% url 'lead_requests' %}" class="btn btn-soft"><i class="fa-solid fa-rotate-right"></i> Сбросить</a>
+                </form>
+            </article>
+
+            <article class="workspace-card">
+                <div class="section-head">
+                    <div>
+                        <h2>Список заявок</h2>
+                        <p>Откройте заявку, чтобы изменить статус и оставить заметку.</p>
+                    </div>
+                </div>
+
+                {% if leads %}
+                    <div class="soft-table-wrap">
+                        <table class="soft-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Дата</th>
+                                    <th>Имя</th>
+                                    <th>Телефон</th>
+                                    <th>Предмет</th>
+                                    <th>Цель</th>
+                                    <th>Статус</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lead in leads %}
+                                    <tr>
+                                        <td>#{{ lead.id }}</td>
+                                        <td>{{ lead.created_at|date:"d.m.Y H:i" }}</td>
+                                        <td>{{ lead.name }}</td>
+                                        <td><a href="tel:{{ lead.phone }}">{{ lead.phone }}</a></td>
+                                        <td>{{ lead.subject }}</td>
+                                        <td>{{ lead.get_goal_display }}</td>
+                                        <td>
+                                            {% if lead.status == 'new' %}
+                                                <span class="status-badge status-new">Новая</span>
+                                            {% elif lead.status == 'in_progress' %}
+                                                <span class="status-badge status-progress">В обработке</span>
+                                            {% elif lead.status == 'contacted' %}
+                                                <span class="status-badge status-contacted">Связались</span>
+                                            {% else %}
+                                                <span class="status-badge status-closed">Закрыта</span>
+                                            {% endif %}
+                                        </td>
+                                        <td><a href="{% url 'lead_detail' lead.id %}" class="btn btn-soft">Открыть</a></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-panel">
+                        <i class="fa-regular fa-inbox"></i>
+                        <h3>Заявок пока нет</h3>
+                        <p>Новые обращения появятся здесь после отправки формы на главной странице.</p>
+                    </div>
+                {% endif %}
+            </article>
+        </section>
+    </main>
+</body>
+</html>
+

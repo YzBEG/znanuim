@@ -1,0 +1,177 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Админ-панель — Znanium Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a href="{% url 'home' %}" class="brand">Znanium Admin</a>
+            <div class="header-actions">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-primary">Панель</a>
+                <a href="{% url 'moderation_dashboard' %}" class="btn btn-ghost">Модерация</a>
+                <a href="{% url 'lead_requests' %}" class="btn btn-ghost">Заявки</a>
+                <a href="/admin/" class="btn btn-soft">Django Admin</a>
+                <a href="{% url 'logout' %}" class="btn btn-soft">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Администратор</span>
+                <h1>Панель управления Znanium</h1>
+                <p>Короткая сводка по пользователям, репетиторам, заявкам и урокам. Отсюда удобно переходить к модерации и обработке обращений.</p>
+            </div>
+        </section>
+
+        <section class="shell workspace-stack">
+            <div class="admin-kpi-grid">
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                    <span>Пользователи</span>
+                    <strong>{{ users_total }}</strong>
+                    <small>{{ students_total }} учеников, {{ tutors_total }} репетиторов</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-user-check"></i></div>
+                    <span>Модерация</span>
+                    <strong>{{ tutors_pending }}</strong>
+                    <small>{{ tutors_approved }} одобрено, {{ tutors_rejected }} отклонено</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                    <span>Уроки</span>
+                    <strong>{{ orders_total }}</strong>
+                    <small>{{ orders_pending }} ожидают, {{ orders_confirmed }} подтверждены</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-inbox"></i></div>
+                    <span>Заявки</span>
+                    <strong>{{ leads_total }}</strong>
+                    <small>{{ leads_new }} новых, {{ leads_in_progress }} в работе</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-regular fa-comments"></i></div>
+                    <span>Чаты</span>
+                    <strong>{{ conversations_total }}</strong>
+                    <small>диалогов между учениками и репетиторами</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-star"></i></div>
+                    <span>Отзывы</span>
+                    <strong>{{ reviews_total }}</strong>
+                    <small>оценок после проведённых уроков</small>
+                </article>
+            </div>
+
+            <div class="admin-panel-grid">
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Быстрые действия</h2>
+                            <p>Основные разделы администрирования без перехода в стандартную Django Admin.</p>
+                        </div>
+                    </div>
+                    <div class="admin-action-grid">
+                        <a href="{% url 'moderation_dashboard' %}">
+                            <i class="fa-solid fa-user-shield"></i>
+                            <strong>Модерация репетиторов</strong>
+                            <span>Проверить анкеты и документы</span>
+                        </a>
+                        <a href="{% url 'lead_requests' %}">
+                            <i class="fa-solid fa-headset"></i>
+                            <strong>Заявки с сайта</strong>
+                            <span>Обработать обращения с главной</span>
+                        </a>
+                        <a href="{% url 'tutor_catalog' %}">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <strong>Публичный каталог</strong>
+                            <span>Проверить видимость анкет</span>
+                        </a>
+                        <a href="/admin/">
+                            <i class="fa-solid fa-database"></i>
+                            <strong>Django Admin</strong>
+                            <span>Глубокое управление данными</span>
+                        </a>
+                    </div>
+                </article>
+
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Состояние процессов</h2>
+                            <p>Что важно проверить перед демонстрацией.</p>
+                        </div>
+                    </div>
+                    <div class="admin-health-list">
+                        <div><span class="status-badge status-new">{{ tutors_pending }}</span><strong>анкет ожидают модерации</strong></div>
+                        <div><span class="status-badge status-progress">{{ leads_new }}</span><strong>новых заявок требуют реакции</strong></div>
+                        <div><span class="status-badge status-contacted">{{ orders_confirmed }}</span><strong>уроков подтверждены</strong></div>
+                        <div><span class="status-badge status-closed">{{ orders_completed }}</span><strong>уроков завершены</strong></div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="admin-panel-grid">
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Последние репетиторы</h2>
+                            <p>Новые и изменённые анкеты.</p>
+                        </div>
+                    </div>
+                    <div class="list-stack">
+                        {% for tutor in recent_tutors %}
+                            <a class="admin-mini-row" href="{% url 'tutor_detail_admin' tutor.id %}">
+                                <span class="student-avatar">{{ tutor.user.get_full_name|default:tutor.user.username|slice:":1" }}</span>
+                                <div>
+                                    <strong>{{ tutor.user.get_full_name|default:tutor.user.username }}</strong>
+                                    <small>{{ tutor.get_verification_status_display }} · {{ tutor.price_per_hour|floatformat:0 }} ₽/час</small>
+                                </div>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </a>
+                        {% empty %}
+                            <div class="empty-panel"><i class="fa-regular fa-user"></i><h3>Анкет пока нет</h3></div>
+                        {% endfor %}
+                    </div>
+                </article>
+
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Последние заявки</h2>
+                            <p>Обращения из формы подбора.</p>
+                        </div>
+                    </div>
+                    <div class="list-stack">
+                        {% for lead in recent_leads %}
+                            <a class="admin-mini-row" href="{% url 'lead_detail' lead.id %}">
+                                <span class="student-avatar">{{ lead.name|slice:":1" }}</span>
+                                <div>
+                                    <strong>{{ lead.name }}</strong>
+                                    <small>{{ lead.subject }} · {{ lead.get_status_display }}</small>
+                                </div>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </a>
+                        {% empty %}
+                            <div class="empty-panel"><i class="fa-regular fa-inbox"></i><h3>Заявок пока нет</h3></div>
+                        {% endfor %}
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
+

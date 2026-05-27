@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Страница не найдена — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                {% if user.is_authenticated %}
+                    {% if user.role == 'tutor' %}
+                        <a class="btn btn-ghost" href="{% url 'tutor_dashboard' %}">Кабинет</a>
+                    {% else %}
+                        <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Кабинет</a>
+                    {% endif %}
+                    <a class="btn btn-primary" href="{% url 'logout' %}">Выход</a>
+                {% else %}
+                    <a class="btn btn-ghost" href="{% url 'login' %}">Войти</a>
+                    <a class="btn btn-primary" href="{% url 'register_choice' %}">Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="auth-page">
+        <section class="shell unavailable-card">
+            <div class="unavailable-icon">
+                <i class="fa-regular fa-compass"></i>
+            </div>
+            <h1>Страница не найдена</h1>
+            <p>Ссылка устарела, страница была перемещена или у вас нет доступа к этому разделу.</p>
+            <div class="inline-actions">
+                <a class="btn btn-primary" href="{% url 'home' %}">На главную</a>
+                <a class="btn btn-soft" href="{% url 'tutor_catalog' %}">В каталог</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
+

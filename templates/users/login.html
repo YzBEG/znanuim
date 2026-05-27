@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Вход — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                <a class="btn btn-primary" href="{% url 'register_choice' %}">Регистрация</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="auth-page">
+        <section class="shell auth-layout auth-login-layout">
+            <aside class="auth-side">
+                <span class="role-icon"><i class="fa-solid fa-right-to-bracket"></i></span>
+                <h1>Войдите в Znanium</h1>
+                <p>Вернитесь к урокам, сообщениям, материалам и управлению расписанием.</p>
+                <div class="auth-steps">
+                    <span><i class="fa-solid fa-check"></i> Кабинет ученика</span>
+                    <span><i class="fa-solid fa-check"></i> Кабинет репетитора</span>
+                    <span><i class="fa-solid fa-check"></i> Сообщения и материалы</span>
+                </div>
+            </aside>
+
+            <article class="auth-card">
+                <div class="auth-card-head">
+                    <h2>Вход</h2>
+                    <p>Введите логин и пароль, чтобы продолжить работу.</p>
+                </div>
+
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" class="auth-form">
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        <div class="form-field full">
+                            <label for="username">Логин</label>
+                            <input type="text" id="username" name="username" autocomplete="username" required>
+                        </div>
+                        <div class="form-field full">
+                            <label for="password">Пароль</label>
+                            <input type="password" id="password" name="password" autocomplete="current-password" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary auth-submit">Войти</button>
+                </form>
+
+                <p class="auth-switch">Нет аккаунта? <a href="{% url 'register_choice' %}">Зарегистрироваться</a></p>
+            </article>
+        </section>
+    </main>
+</body>
+</html>
+

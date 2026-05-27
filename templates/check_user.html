@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Проверка пользователя — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a href="{% url 'home' %}" class="brand">Znanium</a>
+            <div class="header-actions">
+                <a href="{% url 'home' %}" class="btn btn-ghost">Главная</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'logout' %}" class="btn btn-primary">Выйти</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary">Войти</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Проверка</span>
+                <h1>Текущий пользователь</h1>
+                <p>Служебная страница для быстрой проверки роли и доступа.</p>
+            </div>
+        </section>
+
+        <section class="shell workspace-grid solo-grid narrow-grid">
+            {% if user.is_authenticated %}
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Вы авторизованы</h2>
+                            <p>{{ user.get_full_name|default:user.username }}</p>
+                        </div>
+                    </div>
+                    <div class="info-list">
+                        <div class="info-row"><strong>Username</strong><span>{{ user.username }}</span></div>
+                        <div class="info-row"><strong>Email</strong><span>{{ user.email|default:"Не указан" }}</span></div>
+                        <div class="info-row"><strong>Роль</strong><span>{{ user.get_role_display|default:user.role }}</span></div>
+                        <div class="info-row"><strong>Админ-доступ</strong><span>{% if user.is_staff %}Есть{% else %}Нет{% endif %}</span></div>
+                    </div>
+                    <div class="form-actions">
+                        {% if user.is_staff %}
+                            <a href="{% url 'admin_dashboard' %}" class="btn btn-primary">Открыть админ-панель</a>
+                        {% elif user.role == 'student' %}
+                            <a href="{% url 'student_dashboard' %}" class="btn btn-primary">Открыть кабинет</a>
+                        {% elif user.role == 'tutor' %}
+                            <a href="{% url 'tutor_dashboard' %}" class="btn btn-primary">Открыть кабинет</a>
+                        {% endif %}
+                    </div>
+                </article>
+            {% else %}
+                <article class="unavailable-card">
+                    <div class="unavailable-icon"><i class="fa-regular fa-user"></i></div>
+                    <h1>Вы не авторизованы</h1>
+                    <p>Войдите в аккаунт, чтобы проверить роль и доступные разделы.</p>
+                    <div class="inline-actions">
+                        <a href="{% url 'login' %}" class="btn btn-primary">Войти</a>
+                    </div>
+                </article>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>
+

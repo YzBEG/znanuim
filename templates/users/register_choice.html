@@ -1,0 +1,53 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Регистрация — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                <a class="btn btn-ghost" href="{% url 'login' %}">Войти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="auth-page">
+        <section class="shell auth-choice">
+            <div class="auth-intro">
+                <h1>Создайте аккаунт</h1>
+                <p>Выберите роль, чтобы Znanium сразу открыл подходящий личный кабинет и сценарий работы.</p>
+            </div>
+
+            <div class="role-grid">
+                <a href="{% url 'register_student' %}" class="role-card">
+                    <span class="role-icon"><i class="fa-solid fa-user-graduate"></i></span>
+                    <h2>Я ученик</h2>
+                    <p>Хочу подобрать преподавателя, записываться на занятия и хранить материалы уроков.</p>
+                    <span class="role-action">Продолжить <i class="fa-solid fa-arrow-right"></i></span>
+                </a>
+
+                <a href="{% url 'register_tutor' %}" class="role-card">
+                    <span class="role-icon"><i class="fa-solid fa-chalkboard-user"></i></span>
+                    <h2>Я репетитор</h2>
+                    <p>Хочу вести анкету, управлять расписанием, получать заявки и общаться с учениками.</p>
+                    <span class="role-action">Продолжить <i class="fa-solid fa-arrow-right"></i></span>
+                </a>
+            </div>
+
+            <p class="auth-switch">Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a></p>
+        </section>
+    </main>
+</body>
+</html>
+
+

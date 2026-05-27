@@ -1,0 +1,76 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Загрузить материал — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                <a class="btn btn-ghost" href="{% url 'lesson_materials' order.id %}">
+                    <i class="fa-solid fa-arrow-left"></i> Назад
+                </a>
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Загрузка</span>
+                <h1>Добавить материал</h1>
+                <p>Урок {{ order.slot.start_at|date:"d.m.Y H:i" }}. Ученик: {{ order.student.get_full_name|default:order.student.username }}.</p>
+            </div>
+        </section>
+
+        <section class="shell workspace-grid solo-grid narrow-grid">
+            <article class="form-card">
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data" class="auth-form">
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        <div class="form-field full">
+                            <label for="title">Название материала *</label>
+                            <input type="text" id="title" name="title" placeholder="Например: домашнее задание по алгебре" required>
+                        </div>
+                        <div class="form-field full">
+                            <label for="description">Описание</label>
+                            <textarea id="description" name="description" rows="4" placeholder="Кратко напишите, что находится в файле"></textarea>
+                        </div>
+                        <div class="form-field full">
+                            <label for="file">Файл *</label>
+                            <input type="file" id="file" name="file" required>
+                            <span class="field-help">Подойдут PDF, DOCX, XLSX, PPTX, изображения и архивы.</span>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Отмена</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-upload"></i> Загрузить
+                        </button>
+                    </div>
+                </form>
+            </article>
+        </section>
+    </main>
+</body>
+</html>
+

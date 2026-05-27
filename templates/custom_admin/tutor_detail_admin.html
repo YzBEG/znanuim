@@ -1,0 +1,139 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ tutor.user.get_full_name|default:tutor.user.username }} — Znanium Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a href="{% url 'home' %}" class="brand">Znanium Admin</a>
+            <div class="header-actions">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-ghost">Панель</a>
+                <a href="{% url 'moderation_dashboard' %}" class="btn btn-ghost">
+                    <i class="fa-solid fa-arrow-left"></i> Модерация
+                </a>
+                <a href="{% url 'lead_requests' %}" class="btn btn-ghost">Заявки</a>
+                <a href="{% url 'logout' %}" class="btn btn-primary">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Анкета репетитора</span>
+                <h1>{{ tutor.user.get_full_name|default:tutor.user.username }}</h1>
+                <p>Детальная проверка данных перед публикацией профиля.</p>
+            </div>
+        </section>
+
+        <section class="shell admin-detail-grid">
+            <div class="workspace-stack">
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Основная информация</h2>
+                            <p>Контакты, формат занятий и текущий статус анкеты.</p>
+                        </div>
+                    </div>
+                    <div class="info-list">
+                        <div class="info-row"><strong>Email</strong><span>{{ tutor.user.email|default:"Не указан" }}</span></div>
+                        <div class="info-row"><strong>Телефон</strong><span>{{ tutor.user.phone|default:"Не указан" }}</span></div>
+                        <div class="info-row"><strong>Стаж</strong><span>{{ tutor.experience_years }} лет</span></div>
+                        <div class="info-row"><strong>Цена</strong><span>{{ tutor.price_per_hour|floatformat:0 }} ₽/час</span></div>
+                        <div class="info-row"><strong>Формат</strong><span>{{ tutor.get_lesson_format_display }}</span></div>
+                        <div class="info-row"><strong>Город</strong><span>{{ tutor.city|default:"Не указан" }}</span></div>
+                        <div class="info-row"><strong>Статус</strong><span>{{ tutor.get_verification_status_display }}</span></div>
+                    </div>
+                </article>
+
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Предметы</h2>
+                            <p>Направления, которые репетитор указал в анкете.</p>
+                        </div>
+                    </div>
+                    <div class="tag-row">
+                        {% for subject in tutor.subjects.all %}
+                            <span>{{ subject.name }}</span>
+                        {% empty %}
+                            <span>Предметы не указаны</span>
+                        {% endfor %}
+                    </div>
+                </article>
+
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>О себе</h2>
+                            <p>Описание будет видно ученикам после одобрения профиля.</p>
+                        </div>
+                    </div>
+                    {% if tutor.bio %}
+                        <p class="moderation-bio">{{ tutor.bio|linebreaksbr }}</p>
+                    {% else %}
+                        <div class="empty-panel">
+                            <i class="fa-regular fa-file-lines"></i>
+                            <h3>Описание не заполнено</h3>
+                            <p>Лучше отправить анкету на доработку, если профиль выглядит пустым.</p>
+                        </div>
+                    {% endif %}
+                </article>
+
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Документы и медиа</h2>
+                            <p>Проверьте подтверждающие файлы, если они были загружены.</p>
+                        </div>
+                    </div>
+                    <div class="list-stack">
+                        <div class="material-row">
+                            <div class="material-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                            <div>
+                                <h3 class="item-title">Диплом</h3>
+                                <p>{% if tutor.diploma %}Файл загружен и доступен для проверки.{% else %}Файл не загружен.{% endif %}</p>
+                            </div>
+                            {% if tutor.diploma %}
+                                <a href="{{ tutor.diploma.url }}" target="_blank" class="btn btn-soft">Открыть</a>
+                            {% endif %}
+                        </div>
+                        <div class="material-row">
+                            <div class="material-icon"><i class="fa-solid fa-video"></i></div>
+                            <div>
+                                <h3 class="item-title">Видео-визитка</h3>
+                                <p>{% if tutor.intro_video %}Видео загружено.{% else %}Видео не загружено, профиль можно публиковать без него.{% endif %}</p>
+                            </div>
+                            {% if tutor.intro_video %}
+                                <a href="{{ tutor.intro_video.url }}" target="_blank" class="btn btn-soft">Открыть</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <aside class="workspace-card admin-actions-card">
+                <div class="stat-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <h2>Решение</h2>
+                <p class="item-muted">Одобрение сразу откроет публичный профиль в каталоге.</p>
+                <a href="{% url 'approve_tutor' tutor.id %}" class="btn btn-primary">
+                    <i class="fa-solid fa-check"></i> Одобрить
+                </a>
+                <a href="{% url 'reject_tutor' tutor.id %}" class="btn btn-danger">
+                    <i class="fa-solid fa-times"></i> Отклонить
+                </a>
+            </aside>
+        </section>
+    </main>
+</body>
+</html>
+

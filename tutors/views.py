@@ -1,0 +1,145 @@
+from datetime import timedelta
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.db import models
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
+
+from .models import Subject, TutorProfile
+
+
+def home(request):
+    if request.method == "POST":
+        messages.success(request, "Спасибо! Заявка принята. Мы свяжемся с вами в ближайшее время.")
+        return redirect(reverse("home") + "#lead")
+
+    return render(request, "design/home_redesign.html")
+
+
+def design_home_redesign(request):
+    return redirect("home")
+
+
+def tutor_catalog(request):
+    tutors = TutorProfile.objects.select_related("user").prefetch_related("subjects").filter(
+        verification_status=TutorProfile.VerificationStatus.APPROVED
+    )
+
+    subject_id = request.GET.get("subject")
+    city = request.GET.get("city")
+    lesson_format = request.GET.get("format")
+    min_price = request.GET.get("min_price")
+    max_price = request.GET.get("max_price")
+    q = request.GET.get("q")
+    sort = request.GET.get("sort") or "rating"
+
+    if subject_id:
+        tutors = tutors.filter(subjects__id=subject_id)
+    if city:
+        tutors = tutors.filter(city__icontains=city)
+    if lesson_format:
+        tutors = tutors.filter(Q(lesson_format=lesson_format) | Q(lesson_format=TutorProfile.LessonFormat.BOTH))
+    if min_price:
+        tutors = tutors.filter(price_per_hour__gte=min_price)
+    if max_price:
+        tutors = tutors.filter(price_per_hour__lte=max_price)
+    if q:
+        tutors = tutors.filter(
+            Q(user__first_name__icontains=q)
+            | Q(user__last_name__icontains=q)
+            | Q(bio__icontains=q)
+            | Q(subjects__name__icontains=q)
+        )
+
+    tutors = tutors.distinct()
+    sort_options = {
+        "rating": ("-rating", "-review_count"),
+        "price_asc": ("price_per_hour", "-rating"),
+        "price_desc": ("-price_per_hour", "-rating"),
+        "experience": ("-experience_years", "-rating"),
+    }
+    tutors = tutors.order_by(*sort_options.get(sort, sort_options["rating"]))
+
+    return render(
+        request,
+        "tutors/catalog.html",
+        {
+            "tutors": tutors,
+            "subjects": Subject.objects.all(),
+            "filters": {
+                "subject": subject_id or "",
+                "city": city or "",
+                "format": lesson_format or "",
+                "min_price": min_price or "",
+                "max_price": max_price or "",
+                "q": q or "",
+                "sort": sort,
+            },
+        },
+    )
+
+
+def tutor_detail(request, tutor_id):
+    tutor = get_object_or_404(
+        TutorProfile.objects.select_related("user").prefetch_related("subjects"),
+        id=tutor_id,
+    )
+
+    if tutor.verification_status != TutorProfile.VerificationStatus.APPROVED:
+        is_owner = request.user.is_authenticated and request.user == tutor.user
+        return render(
+            request,
+            "tutors/profile_unavailable.html",
+            {
+                "tutor": tutor,
+                "is_owner": is_owner,
+            },
+            status=200 if is_owner else 404,
+        )
+    
+    # Учёт просмотра профиля
+    from .models import ProfileView
+    
+    def get_client_ip(request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+    
+    ProfileView.objects.create(
+        tutor=tutor,
+        viewer=request.user if request.user.is_authenticated else None,
+        ip_address=get_client_ip(request)
+    )
+    
+    # Получаем отзывы
+    from reviews.models import Review
+    reviews = Review.objects.filter(tutor=tutor.user).select_related('student').order_by('-created_at')
+    last_login = tutor.user.last_login
+    tutor_is_online = bool(last_login and timezone.now() - last_login <= timedelta(minutes=15))
+    
+    return render(request, "tutors/detail.html", {
+        "tutor": tutor,
+        "reviews": reviews,
+        "tutor_is_online": tutor_is_online,
+    })
+
+
+
+def tutor_reviews(request, tutor_id):
+    """Просмотр отзывов репетитора"""
+    tutor_profile = get_object_or_404(TutorProfile, id=tutor_id, verification_status='approved')
+    
+    from reviews.models import Review
+    reviews = Review.objects.filter(tutor=tutor_profile.user).select_related('student').order_by('-created_at')
+    
+    context = {
+        'tutor': tutor_profile,
+        'reviews': reviews,
+    }
+    return render(request, 'tutors/reviews.html', context)

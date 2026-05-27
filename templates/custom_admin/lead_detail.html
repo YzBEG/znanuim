@@ -1,0 +1,112 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Заявка #{{ lead.id }} — Znanium Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a href="{% url 'home' %}" class="brand">Znanium Admin</a>
+            <div class="header-actions">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-ghost">Панель</a>
+                <a href="{% url 'lead_requests' %}" class="btn btn-ghost">
+                    <i class="fa-solid fa-arrow-left"></i> К заявкам
+                </a>
+                <a href="{% url 'logout' %}" class="btn btn-primary">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Заявка #{{ lead.id }}</span>
+                <h1>{{ lead.name }}</h1>
+                <p>Создана {{ lead.created_at|date:"d.m.Y в H:i" }}. Предмет: {{ lead.subject }}.</p>
+            </div>
+        </section>
+
+        <section class="shell admin-detail-grid">
+            <div class="workspace-stack">
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Информация о клиенте</h2>
+                            <p>Контакты и параметры подбора преподавателя.</p>
+                        </div>
+                    </div>
+                    <div class="info-list">
+                        <div class="info-row"><strong>Имя</strong><span>{{ lead.name }}</span></div>
+                        <div class="info-row"><strong>Телефон</strong><a href="tel:{{ lead.phone }}">{{ lead.phone }}</a></div>
+                        <div class="info-row"><strong>Предмет</strong><span>{{ lead.subject }}</span></div>
+                        <div class="info-row"><strong>Цель</strong><span>{{ lead.get_goal_display }}</span></div>
+                        <div class="info-row"><strong>Статус</strong><span>{{ lead.get_status_display }}</span></div>
+                    </div>
+                </article>
+
+                <article class="form-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Изменить статус</h2>
+                            <p>Заметки видны только в админ-панели.</p>
+                        </div>
+                    </div>
+                    <form method="post" action="{% url 'update_lead_status' lead.id %}" class="auth-form">
+                        {% csrf_token %}
+                        <div class="form-grid">
+                            <div class="form-field full">
+                                <label for="status">Новый статус</label>
+                                <select id="status" name="status" required>
+                                    <option value="new" {% if lead.status == 'new' %}selected{% endif %}>Новая</option>
+                                    <option value="in_progress" {% if lead.status == 'in_progress' %}selected{% endif %}>В обработке</option>
+                                    <option value="contacted" {% if lead.status == 'contacted' %}selected{% endif %}>Связались</option>
+                                    <option value="closed" {% if lead.status == 'closed' %}selected{% endif %}>Закрыта</option>
+                                </select>
+                            </div>
+                            <div class="form-field full">
+                                <label for="notes">Заметки менеджера</label>
+                                <textarea id="notes" name="notes" rows="5" placeholder="Что уже сделали по заявке">{{ lead.notes }}</textarea>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa-solid fa-save"></i> Сохранить
+                            </button>
+                        </div>
+                    </form>
+                </article>
+            </div>
+
+            <aside class="workspace-card admin-actions-card">
+                <div class="stat-icon"><i class="fa-solid fa-bolt"></i></div>
+                <h2>Быстрые действия</h2>
+                <p class="item-muted">Свяжитесь с клиентом или откройте каталог по предмету.</p>
+                <a href="tel:{{ lead.phone }}" class="btn btn-primary">
+                    <i class="fa-solid fa-phone"></i> Позвонить
+                </a>
+                <a href="{% url 'tutor_catalog' %}?q={{ lead.subject }}" target="_blank" class="btn btn-soft">
+                    <i class="fa-solid fa-magnifying-glass"></i> Найти репетитора
+                </a>
+            </aside>
+        </section>
+    </main>
+</body>
+</html>
+

@@ -1,0 +1,82 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Оставить отзыв — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Кабинет</a>
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Отзыв</span>
+                <h1>Оцените урок</h1>
+                <p>Поделитесь впечатлениями о занятии с {{ order.tutor.get_full_name|default:order.tutor.username }}.</p>
+            </div>
+        </section>
+
+        <section class="shell workspace-grid solo-grid narrow-grid">
+            <article class="form-card">
+                <form method="post" class="auth-form">
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        <div class="form-field full">
+                            <label>Оценка *</label>
+                            <div class="star-rating" id="starRating" aria-label="Оценка урока">
+                                <button type="button" class="star active" data-value="1"><i class="fa-solid fa-star"></i></button>
+                                <button type="button" class="star active" data-value="2"><i class="fa-solid fa-star"></i></button>
+                                <button type="button" class="star active" data-value="3"><i class="fa-solid fa-star"></i></button>
+                                <button type="button" class="star active" data-value="4"><i class="fa-solid fa-star"></i></button>
+                                <button type="button" class="star active" data-value="5"><i class="fa-solid fa-star"></i></button>
+                            </div>
+                            <input type="hidden" name="score" id="scoreInput" value="5" required>
+                        </div>
+                        <div class="form-field full">
+                            <label for="text">Ваш отзыв</label>
+                            <textarea id="text" name="text" rows="6" placeholder="Что понравилось, что стало понятнее, как прошёл урок"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <a href="{% url 'student_dashboard' %}" class="btn btn-soft">Отмена</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-paper-plane"></i> Отправить отзыв
+                        </button>
+                    </div>
+                </form>
+            </article>
+        </section>
+    </main>
+
+    <script>
+        const stars = document.querySelectorAll('.star-rating .star');
+        const scoreInput = document.getElementById('scoreInput');
+
+        stars.forEach((star) => {
+            star.addEventListener('click', () => {
+                const selectedScore = Number(star.dataset.value);
+                scoreInput.value = selectedScore;
+                stars.forEach((item) => {
+                    item.classList.toggle('active', Number(item.dataset.value) <= selectedScore);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,196 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Профиль репетитора — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                {% if profile.id %}<a class="btn btn-ghost" href="{% url 'tutor_detail' profile.id %}">Публичная страница</a>{% endif %}
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выход</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <nav class="shell page-tabs" aria-label="Разделы кабинета">
+            <a href="{% url 'tutor_dashboard' %}"><i class="fa-solid fa-chart-line"></i>Обзор</a>
+            <a href="{% url 'my_students' %}"><i class="fa-solid fa-users"></i>Ученики</a>
+            <a href="{% url 'manage_slots' %}"><i class="fa-regular fa-calendar"></i>Расписание</a>
+            <a href="{% url 'chat_list' %}"><i class="fa-regular fa-message"></i>Сообщения</a>
+            <a class="active" href="{% url 'tutor_profile_edit' %}"><i class="fa-regular fa-user"></i>Профиль</a>
+        </nav>
+
+        <section class="shell workspace-hero">
+            <div>
+                <h1>Данные преподавателя</h1>
+                <p>Здесь редактируются личные данные и публичная информация, которую ученики видят в каталоге и профиле.</p>
+            </div>
+        </section>
+
+        <section class="shell workspace-grid">
+            <div class="workspace-stack">
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data" class="form-card">
+                    {% csrf_token %}
+                    <div class="section-head">
+                        <div>
+                            <h2>Личные данные</h2>
+                            <p>Эти данные помогают ученикам понимать, с кем они будут заниматься.</p>
+                        </div>
+                    </div>
+
+                    <div class="photo-upload">
+                        <img src="{% if profile.photo %}{{ profile.photo }}{% else %}https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}" alt="{{ user.get_full_name|default:user.username }}">
+                        <div>
+                            <label for="photo_upload">Фото репетитора</label>
+                            <input type="file" id="photo_upload" name="photo_upload" accept="image/*">
+                            <span class="field-help">Загрузите портретное фото. Оно появится в каталоге и публичном профиле.</span>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="first_name">Имя</label>
+                            <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="last_name">Фамилия</label>
+                            <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" value="{{ user.email }}">
+                        </div>
+                        <div class="form-field">
+                            <label for="phone">Телефон</label>
+                            <input type="text" id="phone" name="phone" value="{{ user.phone }}">
+                        </div>
+                    </div>
+
+                    <div class="section-head" style="margin-top: 28px;">
+                        <div>
+                            <h2>Публичный профиль</h2>
+                            <p>Описание, предметы, цена и формат занятий отображаются в каталоге.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-field full">
+                            <label for="bio">О себе</label>
+                            <textarea id="bio" name="bio" required>{{ profile.bio }}</textarea>
+                            <span class="field-help">Расскажите об опыте, подходе к занятиям и результатах учеников.</span>
+                        </div>
+                        <div class="form-field">
+                            <label for="experience_years">Стаж, лет</label>
+                            <input type="number" id="experience_years" name="experience_years" value="{{ profile.experience_years }}" min="0" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="price_per_hour">Цена за час, ₽</label>
+                            <input type="number" id="price_per_hour" name="price_per_hour" value="{{ profile.price_per_hour|floatformat:0 }}" min="100" step="50" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="lesson_format">Формат занятий</label>
+                            <select id="lesson_format" name="lesson_format" required>
+                                <option value="online" {% if profile.lesson_format == 'online' %}selected{% endif %}>Онлайн</option>
+                                <option value="offline" {% if profile.lesson_format == 'offline' %}selected{% endif %}>Очный</option>
+                                <option value="both" {% if profile.lesson_format == 'both' %}selected{% endif %}>Очно и онлайн</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="city">Город</label>
+                            <input type="text" id="city" name="city" value="{{ profile.city }}" placeholder="Москва">
+                        </div>
+                    </div>
+
+                    <div class="form-field full" style="margin-top: 18px;">
+                        <span class="subjects-label">Предметы</span>
+                        <div class="subjects-grid">
+                            {% for subject in subjects %}
+                                <label class="subject-check">
+                                    <input type="checkbox" name="subjects" value="{{ subject.id }}" {% if subject in profile.subjects.all %}checked{% endif %}>
+                                    {% if subject.icon %}<i class="fa-solid {{ subject.icon }}"></i>{% endif %}
+                                    <span>{{ subject.name }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="section-head" style="margin-top: 28px;">
+                        <div>
+                            <h2>Документы и видео</h2>
+                            <p>Файлы не обязательны, но повышают доверие к профилю.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="diploma">Диплом / сертификат</label>
+                            {% if profile.diploma %}
+                                <div class="file-current">
+                                    <span><i class="fa-solid fa-file-circle-check"></i> Файл загружен</span>
+                                    <a href="{{ profile.diploma.url }}" target="_blank" rel="noopener">Открыть</a>
+                                </div>
+                            {% endif %}
+                            <input type="file" id="diploma" name="diploma" accept=".pdf,.jpg,.jpeg,.png">
+                            <span class="field-help">PDF, JPG или PNG.</span>
+                        </div>
+                        <div class="form-field">
+                            <label for="intro_video">Видео-визитка</label>
+                            {% if profile.intro_video %}
+                                <div class="file-current">
+                                    <span><i class="fa-solid fa-video"></i> Видео загружено</span>
+                                    <a href="{{ profile.intro_video.url }}" target="_blank" rel="noopener">Открыть</a>
+                                </div>
+                            {% endif %}
+                            <input type="file" id="intro_video" name="intro_video" accept="video/*">
+                            <span class="field-help">Короткое видео-представление преподавателя.</span>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        {% if profile.id %}<a href="{% url 'tutor_detail' profile.id %}" class="btn btn-soft">Посмотреть профиль</a>{% endif %}
+                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    </div>
+                </form>
+            </div>
+
+            <aside class="side-stack">
+                <article class="workspace-card profile-mini">
+                    <div class="profile-mini-top">
+                        <img src="{% if profile.photo %}{{ profile.photo }}{% else %}https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&size=160&background=10367d&color=fff&bold=true{% endif %}" alt="{{ user.get_full_name|default:user.username }}">
+                        <div>
+                            <h3>{{ user.get_full_name|default:user.username }}</h3>
+                            <p>{{ profile.get_lesson_format_display }}{% if profile.city %}, {{ profile.city }}{% endif %}</p>
+                        </div>
+                    </div>
+                    <div class="quick-links">
+                        <a href="{% url 'tutor_dashboard' %}">Кабинет <i class="fa-solid fa-arrow-right"></i></a>
+                        <a href="{% url 'manage_slots' %}">Расписание <i class="fa-solid fa-arrow-right"></i></a>
+                        {% if profile.id %}<a href="{% url 'tutor_detail' profile.id %}">Публичная страница <i class="fa-solid fa-arrow-right"></i></a>{% endif %}
+                    </div>
+                </article>
+            </aside>
+        </section>
+    </main>
+</body>
+</html>
+
+

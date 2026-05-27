@@ -1,0 +1,167 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Запись на урок — Znanium</title>
+    <meta name="description" content="Выберите удобное время для занятия с преподавателем на платформе Znanium.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/book_lesson_redesign.css' %}?v=2">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <nav class="main-nav" aria-label="Основная навигация">
+                <a href="{% url 'home' %}#steps">Как работает</a>
+                <a href="{% url 'home' %}#subjects">Предметы</a>
+                <a href="{% url 'home' %}#about">О платформе</a>
+                <a href="{% url 'home' %}#faq">FAQ</a>
+                <a href="{% url 'home' %}#lead">Оставить заявку</a>
+            </nav>
+            <div class="header-actions">
+                <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Кабинет</a>
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выход</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="booking-page">
+        <div class="shell breadcrumbs">
+            <a href="{% url 'home' %}">Главная</a>
+            <span>/</span>
+            <a href="{% url 'tutor_catalog' %}">Каталог</a>
+            <span>/</span>
+            <a href="{% url 'tutor_detail' tutor.id %}">{{ tutor.user.get_full_name|default:tutor.user.username }}</a>
+            <span>/</span>
+            <span>Запись</span>
+        </div>
+
+        <section class="booking-hero shell">
+            <div>
+                <span class="eyebrow">запись на урок</span>
+                <h1>Выберите удобное время занятия</h1>
+                <p>После отправки заявки преподаватель подтвердит занятие. До подтверждения слот будет закреплён за вами.</p>
+            </div>
+            <a class="btn btn-soft" href="{% url 'tutor_detail' tutor.id %}">
+                <i class="fa-solid fa-arrow-left"></i>
+                Вернуться к профилю
+            </a>
+        </section>
+
+        {% if messages %}
+            <div class="shell messages">
+                {% for message in messages %}
+                    <div class="message">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <section class="shell booking-layout">
+            <div class="booking-main">
+                <article class="booking-card tutor-strip">
+                    <img src="{% if tutor.photo %}{{ tutor.photo }}{% else %}https://ui-avatars.com/api/?name={{ tutor.user.get_full_name|default:tutor.user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}"
+                         alt="{{ tutor.user.get_full_name|default:tutor.user.username }}">
+                    <div>
+                        <span class="muted">Вы записываетесь к преподавателю</span>
+                        <h2>{{ tutor.user.get_full_name|default:tutor.user.username }}</h2>
+                        <div class="tutor-meta">
+                            <span><i class="fa-solid fa-star"></i> {{ tutor.rating|floatformat:1 }}</span>
+                            <span>{{ tutor.review_count }} отзывов</span>
+                            <span>{{ tutor.experience_years }} лет стажа</span>
+                            {% if tutor.city %}<span>{{ tutor.city }}</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="strip-price">
+                        <strong>{{ tutor.price_per_hour|floatformat:0 }} ₽</strong>
+                        <span>за час</span>
+                    </div>
+                </article>
+
+                <article class="booking-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Доступное время</h2>
+                            <p>Выберите один свободный слот из расписания преподавателя.</p>
+                        </div>
+                        <i class="fa-regular fa-calendar-check"></i>
+                    </div>
+
+                    {% if slots %}
+                        <form method="post" class="booking-form">
+                            {% csrf_token %}
+                            <div class="slot-grid">
+                                {% for slot in slots %}
+                                    <label class="slot-option">
+                                        <input type="radio" name="slot_id" value="{{ slot.id }}" required>
+                                        <span class="slot-check"><i class="fa-solid fa-check"></i></span>
+                                        <span class="slot-date">{{ slot.start_at|date:"d.m.Y" }}</span>
+                                        <strong>{{ slot.start_at|date:"H:i" }} - {{ slot.end_at|date:"H:i" }}</strong>
+                                        <span class="slot-weekday">{{ slot.start_at|date:"l" }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+
+                            <button type="submit" class="btn btn-primary submit-button">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                Отправить заявку
+                            </button>
+                            <p class="submit-note">Заявка появится у преподавателя в личном кабинете. Он сможет подтвердить или отклонить занятие.</p>
+                        </form>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="fa-regular fa-calendar-xmark"></i></div>
+                            <h3>Свободного времени пока нет</h3>
+                            <p>Преподаватель ещё не добавил слоты для записи. Можно вернуться к профилю или выбрать другого репетитора в каталоге.</p>
+                            <div class="empty-actions">
+                                <a href="{% url 'tutor_detail' tutor.id %}" class="btn btn-primary">Профиль преподавателя</a>
+                                <a href="{% url 'tutor_catalog' %}" class="btn btn-soft">Открыть каталог</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </article>
+            </div>
+
+            <aside class="booking-summary">
+                <div class="summary-card">
+                    <h2>Кратко о записи</h2>
+                    <div class="summary-line">
+                        <span>Формат</span>
+                        <strong>{{ tutor.get_lesson_format_display }}</strong>
+                    </div>
+                    <div class="summary-line">
+                        <span>Стоимость</span>
+                        <strong>{{ tutor.price_per_hour|floatformat:0 }} ₽/час</strong>
+                    </div>
+                    <div class="summary-line">
+                        <span>Статус</span>
+                        <strong>ожидает подтверждения</strong>
+                    </div>
+                </div>
+
+                <div class="summary-card steps-card">
+                    <h2>Как это пройдёт</h2>
+                    <div class="step">
+                        <span>01</span>
+                        <p>Вы выбираете свободное время и отправляете заявку.</p>
+                    </div>
+                    <div class="step">
+                        <span>02</span>
+                        <p>Преподаватель подтверждает занятие в своём кабинете.</p>
+                    </div>
+                    <div class="step">
+                        <span>03</span>
+                        <p>Информация об уроке появится в вашем личном кабинете.</p>
+                    </div>
+                </div>
+            </aside>
+        </section>
+    </main>
+</body>
+</html>
+

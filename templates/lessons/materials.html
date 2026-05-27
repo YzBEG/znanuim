@@ -1,0 +1,116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Материалы к уроку — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                {% if is_tutor %}
+                    <a class="btn btn-ghost" href="{% url 'tutor_dashboard' %}">Кабинет</a>
+                    <a class="btn btn-ghost" href="{% url 'my_students' %}">Ученики</a>
+                {% else %}
+                    <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Кабинет</a>
+                {% endif %}
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Материалы</span>
+                <h1>Материалы к уроку</h1>
+                <p>
+                    {{ order.slot.start_at|date:"d.m.Y H:i" }} - {{ order.slot.end_at|date:"H:i" }}.
+                    {% if is_tutor %}
+                        Ученик: {{ order.student.get_full_name|default:order.student.username }}.
+                    {% else %}
+                        Репетитор: {{ order.tutor.get_full_name|default:order.tutor.username }}.
+                    {% endif %}
+                </p>
+            </div>
+            <div class="inline-actions">
+                {% if order.status == 'confirmed' %}
+                    <a href="{% url 'video_lesson' order.id %}" class="btn btn-primary">
+                        <i class="fa-solid fa-video"></i> Видеоурок
+                    </a>
+                {% endif %}
+                {% if is_tutor %}
+                    <a href="{% url 'upload_material' order.id %}" class="btn btn-soft">
+                        <i class="fa-solid fa-upload"></i> Загрузить материал
+                    </a>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="shell workspace-grid solo-grid">
+            <div class="workspace-card">
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="section-head">
+                    <div>
+                        <h2>Файлы урока</h2>
+                        <p>Здесь хранятся задания, конспекты и дополнительные материалы.</p>
+                    </div>
+                </div>
+
+                <div class="list-stack">
+                    {% for material in materials %}
+                        <article class="material-row">
+                            <div class="material-icon">
+                                <i class="fa-solid {{ material.get_file_icon }}"></i>
+                            </div>
+                            <div>
+                                <h3 class="item-title">{{ material.title }}</h3>
+                                {% if material.description %}
+                                    <p>{{ material.description }}</p>
+                                {% endif %}
+                                <div class="item-line">
+                                    <span><i class="fa-regular fa-clock"></i> {{ material.uploaded_at|date:"d.m.Y H:i" }}</span>
+                                </div>
+                            </div>
+                            <a href="{{ material.file.url }}" class="btn btn-soft" download>
+                                <i class="fa-solid fa-download"></i> Скачать
+                            </a>
+                        </article>
+                    {% empty %}
+                        <div class="empty-panel">
+                            <i class="fa-solid fa-folder-open"></i>
+                            <h3>Материалов пока нет</h3>
+                            {% if is_tutor %}
+                                <p>Загрузите первый файл, чтобы ученик мог открыть его после урока.</p>
+                                <div class="empty-actions">
+                                    <a href="{% url 'upload_material' order.id %}" class="btn btn-primary">
+                                        <i class="fa-solid fa-upload"></i> Загрузить материал
+                                    </a>
+                                </div>
+                            {% else %}
+                                <p>Репетитор ещё не добавил материалы к этому уроку.</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

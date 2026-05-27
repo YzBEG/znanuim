@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Отзывы о {{ tutor.user.get_full_name|default:tutor.user.username }} — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a href="{% url 'home' %}" class="brand">Znanium</a>
+            <div class="header-actions">
+                <a href="{% url 'tutor_catalog' %}" class="btn btn-ghost">Каталог</a>
+                <a href="{% url 'tutor_detail' tutor.id %}" class="btn btn-ghost">Профиль</a>
+                {% if user.is_authenticated %}
+                    <a href="{% if user.role == 'student' %}{% url 'student_dashboard' %}{% else %}{% url 'tutor_dashboard' %}{% endif %}" class="btn btn-primary">Кабинет</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary">Войти</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Отзывы</span>
+                <h1>{{ tutor.user.get_full_name|default:tutor.user.username }}</h1>
+                <p>{{ tutor.rating|floatformat:1 }} из 5 на основе {{ tutor.review_count }} отзывов. Опыт: {{ tutor.experience_years }} лет, цена от {{ tutor.price_per_hour|floatformat:0 }} ₽/час.</p>
+            </div>
+            <a href="{% url 'tutor_detail' tutor.id %}" class="btn btn-soft">
+                <i class="fa-solid fa-arrow-left"></i> К профилю
+            </a>
+        </section>
+
+        <section class="shell workspace-grid solo-grid narrow-grid">
+            <div class="workspace-card">
+                <div class="section-head">
+                    <div>
+                        <h2>Отзывы учеников</h2>
+                        <p>Отзывы появляются после завершённых уроков.</p>
+                    </div>
+                </div>
+
+                <div class="list-stack">
+                    {% for review in reviews %}
+                        <article class="review-row">
+                            <div class="review-author">
+                                <img src="https://ui-avatars.com/api/?name={{ review.student.get_full_name|default:review.student.username|urlencode }}&size=124&background=10367d&color=fff&bold=true" alt="{{ review.student.get_full_name|default:review.student.username }}">
+                                <div>
+                                    <div class="review-head">
+                                        <div>
+                                            <h3>{{ review.student.get_full_name|default:review.student.username }}</h3>
+                                            <div class="stars-line">
+                                                {% for i in "12345" %}
+                                                    {% if forloop.counter <= review.score %}
+                                                        <i class="fa-solid fa-star"></i>
+                                                    {% else %}
+                                                        <i class="fa-regular fa-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <span class="item-muted">{{ review.created_at|date:"d.m.Y" }}</span>
+                                    </div>
+                                    <p>{{ review.text|default:"Ученик оставил оценку без текстового комментария." }}</p>
+                                    {% if review.tutor_reply %}
+                                        <div class="reply-box">
+                                            <strong>Ответ репетитора:</strong>
+                                            <p>{{ review.tutor_reply }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </article>
+                    {% empty %}
+                        <div class="empty-panel">
+                            <i class="fa-regular fa-comment-dots"></i>
+                            <h3>Пока нет отзывов</h3>
+                            <p>Когда ученики завершат уроки и оставят отзывы, они появятся здесь.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
+

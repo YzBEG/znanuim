@@ -1,0 +1,435 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Znanium - репетиторы онлайн</title>
+    <meta name="description" content="Онлайн-платформа для подбора репетиторов, бронирования занятий и обучения в личном кабинете.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/home_redesign.css' %}?v=19">
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <nav class="main-nav" aria-label="Основная навигация">
+                <a href="#steps">Как работает</a>
+                <a href="#subjects">Предметы</a>
+                <a href="#about">О платформе</a>
+                <a href="#faq">FAQ</a>
+                <a href="#lead">Оставить заявку</a>
+            </nav>
+            <div class="header-actions">
+                {% if user.is_authenticated %}
+                    {% if user.is_staff or user.role == 'admin' or user.role == 'moderator' %}
+                        <a class="btn btn-ghost" href="{% url 'admin_dashboard' %}">Админ-панель</a>
+                    {% elif user.role == 'tutor' %}
+                        <a class="btn btn-ghost" href="{% url 'tutor_dashboard' %}">Кабинет</a>
+                    {% else %}
+                        <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Кабинет</a>
+                    {% endif %}
+                {% else %}
+                    <a class="btn btn-ghost" href="{% url 'login' %}">Войти</a>
+                {% endif %}
+                <a class="btn btn-primary" href="{% url 'tutor_catalog' %}">Найти репетитора</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="shell hero-grid">
+                <div class="hero-copy">
+                    <h1>Репетиторы онлайн для уверенной учебы</h1>
+                    <p class="hero-lead">Выберите предмет, сравните преподавателей и забронируйте занятие в одном сервисе. Чат, материалы и история уроков остаются в личном кабинете.</p>
+
+                    <form class="finder-card" action="{% url 'tutor_catalog' %}" method="get">
+                        <label>
+                            <span>Предмет</span>
+                            <input type="hidden" name="q" value="математика">
+                            <div class="soft-select" data-soft-select>
+                                <button type="button" aria-haspopup="listbox" aria-expanded="false">Математика</button>
+                                <div class="soft-select-menu" role="listbox">
+                                    <button type="button" data-value="математика">Математика</button>
+                                    <button type="button" data-value="физика">Физика</button>
+                                    <button type="button" data-value="английский">Английский</button>
+                                    <button type="button" data-value="информатика">Информатика</button>
+                                </div>
+                            </div>
+                        </label>
+                        <label>
+                            <span>Цель</span>
+                            <input type="hidden" name="goal" value="ЕГЭ / ОГЭ">
+                            <div class="soft-select" data-soft-select>
+                                <button type="button" aria-haspopup="listbox" aria-expanded="false">ЕГЭ / ОГЭ</button>
+                                <div class="soft-select-menu" role="listbox">
+                                    <button type="button" data-value="ЕГЭ / ОГЭ">ЕГЭ / ОГЭ</button>
+                                    <button type="button" data-value="Школьная программа">Школьная программа</button>
+                                    <button type="button" data-value="Для себя">Для себя</button>
+                                </div>
+                            </div>
+                        </label>
+                        <label>
+                            <span>Бюджет</span>
+                            <input name="max_price" type="number" placeholder="до 3000 ₽">
+                        </label>
+                        <button class="round-submit" type="submit" aria-label="Найти репетитора">→</button>
+                    </form>
+
+                    <div class="hero-actions">
+                        <a class="btn btn-primary btn-large" href="{% url 'tutor_catalog' %}">Подобрать репетитора</a>
+                        <a class="btn btn-soft btn-large" href="#steps">Как это работает</a>
+                    </div>
+                </div>
+
+                <div class="hero-visual" aria-label="Пример подбора репетитора">
+                    <div class="hero-panel">
+                        <div class="panel-top">
+                            <div>
+                                <strong>Подбор за 3 минуты</strong>
+                                <span>Рейтинг, цена, формат и свободные слоты</span>
+                            </div>
+                            <span class="panel-badge">онлайн</span>
+                        </div>
+                        <div class="tutor-preview active">
+                            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=220&q=85" alt="Репетитор математики">
+                            <div>
+                                <strong>Анна Кириллова</strong>
+                                <span>Математика • 4.9</span>
+                            </div>
+                            <b>1200 ₽</b>
+                        </div>
+                        <div class="tutor-preview">
+                            <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=220&q=85" alt="Репетитор физики">
+                            <div>
+                                <strong>Дмитрий Соловьев</strong>
+                                <span>Физика • онлайн</span>
+                            </div>
+                            <b>чат</b>
+                        </div>
+                        <a class="btn btn-primary panel-button" href="{% url 'tutor_catalog' %}">Забронировать урок</a>
+                    </div>
+                    <div class="hero-photo">
+                        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=900&q=85" alt="Студенты занимаются онлайн">
+                    </div>
+                    <div class="stats-card">
+                        <div><strong>14</strong><span>репетиторов</span></div>
+                        <div><strong>88</strong><span>отзывов</span></div>
+                        <div><strong>24/7</strong><span>чат и материалы</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="steps-section" id="steps">
+            <div class="shell">
+                <div class="section-title centered">
+                    <h2>Всего 4 простых шага</h2>
+                    <p>От выбора цели до первого занятия - без лишних звонков и переписок вне платформы.</p>
+                </div>
+
+                <div class="steps-map">
+                    <svg class="steps-line" viewBox="0 0 1120 540" aria-hidden="true">
+                        <path class="steps-visible-path" d="M92 112 C220 164 334 121 438 128 C530 122 540 252 654 262 C790 274 930 166 984 104 C1058 24 1110 122 1036 270 C964 414 824 456 662 424 C500 392 424 496 286 474" />
+                        <path id="steps-motion-path" class="steps-motion-path" d="M92 112 C220 164 334 121 438 128 C530 122 540 252 654 262 C790 274 930 166 984 104 C1058 24 1110 122 1036 270 C964 414 824 456 662 424 C500 392 424 496 286 474 C424 496 500 392 662 424 C824 456 964 414 1036 270 C1110 122 1058 24 984 104 C930 166 790 274 654 262 C540 252 530 122 438 128 C334 121 220 164 92 112" />
+                        <circle class="steps-line-dot" r="12">
+                            <animateMotion dur="10s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyTimes="0;0.1;0.7;0.8;1" keyPoints="0;0;0.5;0.5;1">
+                                <mpath href="#steps-motion-path"></mpath>
+                            </animateMotion>
+                        </circle>
+                    </svg>
+                    <article class="step-card step-1">
+                        <span>01</span>
+                        <h3>Оставьте заявку</h3>
+                        <p>Выберите предмет, цель и бюджет или сразу откройте каталог.</p>
+                    </article>
+                    <article class="step-card step-2">
+                        <span>02</span>
+                        <h3>Изучите преподавателей</h3>
+                        <p>Сравните анкеты, опыт, цену, формат занятий и отзывы.</p>
+                    </article>
+                    <article class="step-card step-3">
+                        <span>03</span>
+                        <h3>Забронируйте урок</h3>
+                        <p>Выберите свободный слот и подтвердите занятие в личном кабинете.</p>
+                    </article>
+                    <article class="step-card step-4">
+                        <span>04</span>
+                        <h3>Учитесь и отслеживайте прогресс</h3>
+                        <p>Материалы, чат и история уроков остаются внутри Znanium.</p>
+                    </article>
+                    <figure class="step-photo photo-one">
+                        <img src="https://images.unsplash.com/photo-1596496181871-9681eacf9764?w=700&q=85" alt="Урок с репетитором">
+                    </figure>
+                    <figure class="step-photo photo-two">
+                        <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=700&q=85" alt="Индивидуальное обучение">
+                    </figure>
+                </div>
+            </div>
+        </section>
+
+        <section class="subjects-section" id="subjects">
+            <div class="shell">
+                <div class="catalog-heading">
+                    <span>каталог</span>
+                    <h2>Популярные предметы</h2>
+                    <p>Более 50 дисциплин для учеников любого уровня</p>
+                </div>
+                <div class="subject-cards">
+                    <a class="subject-card subject-math" href="{% url 'tutor_catalog' %}?q=математика">
+                        <div class="subject-art">
+                            <b>x² + y² = r²</b>
+                            <span>sin α · cos β</span>
+                            <em>∫ f(x) dx</em>
+                        </div>
+                        <strong>Математика</strong>
+                        <small>от 1500 ₽/час</small>
+                        <p>3 репетитора</p>
+                    </a>
+                    <a class="subject-card subject-physics" href="{% url 'tutor_catalog' %}?q=физика">
+                        <div class="subject-art">
+                            <b>F = ma</b>
+                            <span>E = mc²</span>
+                            <em>v = s / t</em>
+                        </div>
+                        <strong>Физика</strong>
+                        <small>от 1500 ₽/час</small>
+                        <p>2 репетитора</p>
+                    </a>
+                    <a class="subject-card subject-english" href="{% url 'tutor_catalog' %}?q=английский">
+                        <div class="subject-art">
+                            <b>Past Simple</b>
+                            <span>speaking practice</span>
+                            <em>reading • grammar</em>
+                        </div>
+                        <strong>Английский язык</strong>
+                        <small>от 1000 ₽/час</small>
+                        <p>2 репетитора</p>
+                    </a>
+                    <a class="subject-card subject-social" href="{% url 'tutor_catalog' %}?q=обществознание">
+                        <div class="subject-art">
+                            <b>право</b>
+                            <span>экономика</span>
+                            <em>общество • человек</em>
+                        </div>
+                        <strong>Обществознание</strong>
+                        <small>от 1400 ₽/час</small>
+                        <p>2 репетитора</p>
+                    </a>
+                    <a class="subject-card subject-russian" href="{% url 'tutor_catalog' %}?q=русский">
+                        <div class="subject-art">
+                            <b>орфография</b>
+                            <span>сочинение ЕГЭ</span>
+                            <em>пунктуация</em>
+                        </div>
+                        <strong>Русский язык</strong>
+                        <small>от 1500 ₽/час</small>
+                        <p>1 репетитор</p>
+                    </a>
+                    <a class="subject-card subject-code" href="{% url 'tutor_catalog' %}?q=информатика">
+                        <div class="subject-art">
+                            <b>def solve():</b>
+                            <span>Python • SQL</span>
+                            <em>for i in range(n)</em>
+                        </div>
+                        <strong>Информатика</strong>
+                        <small>от 1700 ₽/час</small>
+                        <p>1 репетитор</p>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="benefits-section" id="about">
+            <div class="shell">
+                <div class="benefits-head">
+                    <div class="section-title">
+                        <h2>Почему выбирают Znanium</h2>
+                        <p>Платформа закрывает весь путь ученика: подбор, бронь, связь, материалы и безопасную оплату.</p>
+                    </div>
+                    <div class="benefits-widget" aria-hidden="true">
+                        <div class="widget-card active">
+                            <span></span>
+                            <strong>Проверка анкет</strong>
+                        </div>
+                        <div class="widget-card">
+                            <span></span>
+                            <strong>Безопасная оплата</strong>
+                        </div>
+                        <div class="widget-card">
+                            <span></span>
+                            <strong>Материалы в кабинете</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="benefit-grid">
+                    <article class="benefit-card">
+                        <span>✓</span>
+                        <b>01</b>
+                        <h3>Проверенные преподаватели</h3>
+                        <p>Анкеты проходят модерацию, а ученики видят опыт, формат занятий и отзывы.</p>
+                    </article>
+                    <article class="benefit-card">
+                        <span>₽</span>
+                        <b>02</b>
+                        <h3>Безопасная оплата</h3>
+                        <p>Деньги фиксируются на платформе и списываются после подтверждения урока.</p>
+                    </article>
+                    <article class="benefit-card">
+                        <span>▣</span>
+                        <b>03</b>
+                        <h3>Личный кабинет</h3>
+                        <p>Расписание, чат, материалы и история уроков доступны в одном месте.</p>
+                    </article>
+                    <article class="benefit-card">
+                        <span>↗</span>
+                        <b>04</b>
+                        <h3>Гибкий формат</h3>
+                        <p>Онлайн-занятия, удобные слоты и быстрый выбор подходящего преподавателя.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="faq-section" id="faq">
+            <div class="shell faq-shell">
+                <div class="section-title centered">
+                    <h2>У вас остались вопросы?</h2>
+                    <p>Ответили на то, что чаще всего спрашивают перед первым занятием.</p>
+                </div>
+                <div class="faq-list">
+                    <details>
+                        <summary>Как выбрать подходящего репетитора?</summary>
+                        <p>Смотрите предмет, опыт, рейтинг, цену, формат занятий и отзывы. Если хочется быстрее, начните с заявки.</p>
+                    </details>
+                    <details>
+                        <summary>Как быстро можно начать заниматься?</summary>
+                        <p>Если у преподавателя есть свободные слоты, занятие можно забронировать на ближайшее удобное время.</p>
+                    </details>
+                    <details>
+                        <summary>Можно ли заниматься онлайн прямо в Znanium?</summary>
+                        <p>Да, платформа предусматривает личный кабинет, чат, материалы и онлайн-формат занятий.</p>
+                    </details>
+                    <details>
+                        <summary>Что делать, если репетитор не подошел?</summary>
+                        <p>Можно выбрать другого преподавателя и продолжить работу с сохранением истории и материалов.</p>
+                    </details>
+                    <details>
+                        <summary>Сколько стоит занятие с репетитором?</summary>
+                        <p>Стоимость зависит от предмета, опыта преподавателя и формата. В каталоге можно отфильтровать цену.</p>
+                    </details>
+                </div>
+                <div class="contact-strip">
+                    <div>
+                        <strong>+7 (495) 120-34-56</strong>
+                        <span>Телефон контактного центра</span>
+                    </div>
+                    <p>Также можно написать на <a href="mailto:help@znanium.ru">help@znanium.ru</a> - ответим в течение рабочего дня.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="lead-section" id="lead">
+            <div class="shell lead-grid">
+                <div class="lead-copy">
+                    <span class="eyebrow">заявка на подбор</span>
+                    <h2>Оставьте заявку, и мы подберём преподавателя</h2>
+                    <p>Укажите предмет, цель и удобный способ связи. После этого можно будет перейти в каталог и сравнить подходящих репетиторов.</p>
+                    <div class="lead-points">
+                        <span>Без звонков вне платформы</span>
+                        <span>Подбор по цели и бюджету</span>
+                        <span>Онлайн-занятия и материалы в кабинете</span>
+                    </div>
+                </div>
+                <form class="lead-form" method="post" action="{% url 'submit_lead' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'home' %}#lead">
+                    <label>
+                        <span>Ваше имя</span>
+                        <input name="name" type="text" placeholder="Антон" required>
+                    </label>
+                    <label>
+                        <span>Телефон</span>
+                        <input name="phone" type="tel" placeholder="+7 (___) ___-__-__" required>
+                    </label>
+                    <label>
+                        <span>Предмет</span>
+                        <input name="subject" type="text" placeholder="Например: математика" required>
+                    </label>
+                    <label>
+                        <span>Цель занятий</span>
+                        <input type="hidden" name="goal" value="exam">
+                        <div class="soft-select soft-select-field" data-soft-select>
+                            <button type="button" aria-haspopup="listbox" aria-expanded="false">Подготовка к ЕГЭ / ОГЭ</button>
+                            <div class="soft-select-menu" role="listbox">
+                                <button type="button" data-value="exam">Подготовка к ЕГЭ / ОГЭ</button>
+                                <button type="button" data-value="grades">Подтянуть оценки</button>
+                                <button type="button" data-value="self">Для себя</button>
+                            </div>
+                        </div>
+                    </label>
+                    <button class="btn btn-primary btn-large" type="submit">Оставить заявку</button>
+                    <a class="btn btn-soft btn-large" href="{% url 'tutor_catalog' %}">Перейти в каталог</a>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="shell footer-inner">
+            <div>
+                <a class="brand" href="{% url 'home' %}">Znanium</a>
+                <p>Онлайн-платформа для подбора репетиторов и проведения занятий.</p>
+            </div>
+            <nav aria-label="Навигация в футере">
+                <a href="#steps">Как работает</a>
+                <a href="#subjects">Предметы</a>
+                <a href="#about">О платформе</a>
+                <a href="#faq">FAQ</a>
+                <a href="#lead">Оставить заявку</a>
+            </nav>
+        </div>
+    </footer>
+    <script>
+        document.querySelectorAll('[data-soft-select]').forEach((select) => {
+            const trigger = select.querySelector('button[aria-haspopup="listbox"]');
+            const input = select.previousElementSibling;
+            const options = select.querySelectorAll('.soft-select-menu button');
+
+            trigger.addEventListener('click', () => {
+                const isOpen = select.classList.toggle('is-open');
+                trigger.setAttribute('aria-expanded', String(isOpen));
+                document.querySelectorAll('[data-soft-select].is-open').forEach((other) => {
+                    if (other !== select) {
+                        other.classList.remove('is-open');
+                        other.querySelector('button[aria-haspopup="listbox"]').setAttribute('aria-expanded', 'false');
+                    }
+                });
+            });
+
+            options.forEach((option) => {
+                option.addEventListener('click', () => {
+                    trigger.textContent = option.textContent;
+                    input.value = option.dataset.value;
+                    select.classList.remove('is-open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                });
+            });
+        });
+
+        document.addEventListener('click', (event) => {
+            if (event.target.closest('[data-soft-select]')) {
+                return;
+            }
+
+            document.querySelectorAll('[data-soft-select].is-open').forEach((select) => {
+                select.classList.remove('is-open');
+                select.querySelector('button[aria-haspopup="listbox"]').setAttribute('aria-expanded', 'false');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Кабинет ученика — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                <a class="btn btn-ghost" href="{% url 'tutor_catalog' %}">Каталог</a>
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выход</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <div class="shell">
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <section class="student-hero-card">
+                <div class="student-hero-copy">
+                    <h1>{{ user.get_full_name|default:user.username }}</h1>
+                    <p>Заявки, занятия, материалы и переписки собраны в одном месте.</p>
+                    <div class="inline-actions">
+                        <a href="{% url 'tutor_catalog' %}" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i>Найти репетитора</a>
+                        <a href="{% url 'chat_list' %}" class="btn btn-soft"><i class="fa-regular fa-comments"></i>Сообщения</a>
+                    </div>
+                </div>
+
+                <article class="student-next-card">
+                    {% if upcoming_lessons %}
+                        {% with next_lesson=upcoming_lessons.0 %}
+                            <h2>{{ next_lesson.slot.start_at|date:"d.m, H:i" }}</h2>
+                            <p>{{ next_lesson.tutor.get_full_name|default:next_lesson.tutor.username }}</p>
+                            <div class="student-next-actions">
+                                <span class="status-pill {% if next_lesson.status == 'confirmed' %}status-confirmed{% else %}status-pending{% endif %}">{{ next_lesson.get_status_display }}</span>
+                                {% if next_lesson.status == 'confirmed' %}
+                                    <a href="{% url 'video_lesson' next_lesson.id %}" class="btn btn-primary"><i class="fa-solid fa-video"></i>Войти в урок</a>
+                                {% endif %}
+                                <a href="{% url 'start_chat' next_lesson.tutor.id %}" class="btn btn-soft">Написать</a>
+                            </div>
+                        {% endwith %}
+                    {% else %}
+                        <h2>Подберите преподавателя</h2>
+                        <p>Выберите предмет, удобное время и отправьте заявку на урок.</p>
+                        <a href="{% url 'tutor_catalog' %}" class="btn btn-primary">Открыть каталог</a>
+                    {% endif %}
+                </article>
+            </section>
+
+            <section class="stats-grid student-stats">
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
+                    <span>Баланс</span>
+                    <strong>{{ wallet.balance|floatformat:0 }} ₽</strong>
+                    <small>Пополнение появится позже</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                    <span>Ближайшие</span>
+                    <strong>{{ upcoming_lessons|length }}</strong>
+                    <small>Заявки и подтверждённые уроки</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <span>История</span>
+                    <strong>{{ past_lessons|length }}</strong>
+                    <small>Проведённые занятия</small>
+                </article>
+            </section>
+
+            <article class="workspace-card student-lessons-card">
+                <div class="section-head">
+                    <div>
+                        <h2>Мои уроки</h2>
+                        <p>Переключайтесь между текущими заявками и завершёнными занятиями.</p>
+                    </div>
+                    <div class="student-tabbar" role="tablist" aria-label="Уроки ученика">
+                        <button class="active" type="button" data-student-tab="upcoming" role="tab" aria-selected="true">Ближайшие</button>
+                        <button type="button" data-student-tab="past" role="tab" aria-selected="false">История</button>
+                    </div>
+                </div>
+
+                <div class="student-tab-panel active" data-student-panel="upcoming">
+                    {% if upcoming_lessons %}
+                        <div class="list-stack">
+                            {% for order in upcoming_lessons %}
+                                <div class="lesson-row">
+                                    <div class="lesson-person">
+                                        <img class="lesson-photo" src="{% if order.tutor.tutor_profile.photo %}{{ order.tutor.tutor_profile.photo }}{% else %}https://ui-avatars.com/api/?name={{ order.tutor.get_full_name|default:order.tutor.username|urlencode }}&size=160&background=10367d&color=fff&bold=true{% endif %}" alt="{{ order.tutor.get_full_name|default:order.tutor.username }}">
+                                        <div>
+                                            <h3 class="item-title">{{ order.tutor.get_full_name|default:order.tutor.username }}</h3>
+                                            <div class="item-line">
+                                                <span><i class="fa-regular fa-clock"></i>{{ order.slot.start_at|date:"d.m.Y H:i" }} - {{ order.slot.end_at|date:"H:i" }}</span>
+                                                <span><i class="fa-solid fa-ruble-sign"></i>{{ order.price|floatformat:0 }} ₽</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-actions">
+                                        {% if order.status == 'confirmed' %}
+                                            <span class="status-pill status-confirmed">{{ order.get_status_display }}</span>
+                                            <a href="{% url 'video_lesson' order.id %}" class="btn btn-primary"><i class="fa-solid fa-video"></i>Видеоурок</a>
+                                            <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
+                                            <a href="{% url 'start_chat' order.tutor.id %}" class="btn btn-soft">Написать</a>
+                                        {% else %}
+                                            <span class="status-pill status-pending">{{ order.get_status_display }}</span>
+                                            <a href="{% url 'cancel_order' order.id %}" class="btn btn-danger" onclick="return confirm('Отменить заявку?')">Отменить</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-panel">
+                            <i class="fa-regular fa-calendar"></i>
+                            <h3>Ближайших уроков пока нет</h3>
+                            <p>Откройте каталог, выберите преподавателя и забронируйте удобный слот.</p>
+                            <div class="empty-actions">
+                                <a href="{% url 'tutor_catalog' %}" class="btn btn-primary">Перейти в каталог</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="student-tab-panel" data-student-panel="past" hidden>
+                    {% if past_lessons %}
+                        <div class="list-stack">
+                            {% for order in past_lessons %}
+                                <div class="lesson-row">
+                                    <div class="lesson-person">
+                                        <img class="lesson-photo" src="{% if order.tutor.tutor_profile.photo %}{{ order.tutor.tutor_profile.photo }}{% else %}https://ui-avatars.com/api/?name={{ order.tutor.get_full_name|default:order.tutor.username|urlencode }}&size=160&background=10367d&color=fff&bold=true{% endif %}" alt="{{ order.tutor.get_full_name|default:order.tutor.username }}">
+                                        <div>
+                                            <h3 class="item-title">{{ order.tutor.get_full_name|default:order.tutor.username }}</h3>
+                                            <div class="item-line">
+                                                <span><i class="fa-regular fa-calendar"></i>{{ order.slot.start_at|date:"d.m.Y H:i" }}</span>
+                                                <span><i class="fa-solid fa-ruble-sign"></i>{{ order.price|floatformat:0 }} ₽</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-actions">
+                                        <span class="status-pill status-completed">Проведён</span>
+                                        <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
+                                        {% if not order.review %}
+                                            <a href="{% url 'leave_review' order.id %}" class="btn btn-primary">Отзыв</a>
+                                        {% else %}
+                                            <span class="status-pill status-confirmed"><i class="fa-solid fa-check"></i>Отзыв оставлен</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-panel">
+                            <i class="fa-regular fa-folder-open"></i>
+                            <h3>История уроков пуста</h3>
+                            <p>После завершения занятий здесь появятся материалы и отзывы.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+        </div>
+    </main>
+
+    <script>
+        document.querySelectorAll('[data-student-tab]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const target = button.dataset.studentTab;
+
+                document.querySelectorAll('[data-student-tab]').forEach((tab) => {
+                    const isActive = tab === button;
+                    tab.classList.toggle('active', isActive);
+                    tab.setAttribute('aria-selected', String(isActive));
+                });
+
+                document.querySelectorAll('[data-student-panel]').forEach((panel) => {
+                    const isActive = panel.dataset.studentPanel === target;
+                    panel.classList.toggle('active', isActive);
+                    panel.hidden = !isActive;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

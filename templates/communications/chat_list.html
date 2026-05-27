@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Сообщения — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                {% if user.role == 'student' %}
+                    <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Мой кабинет</a>
+                {% elif user.role == 'tutor' %}
+                    <a class="btn btn-ghost" href="{% url 'tutor_dashboard' %}">Кабинет</a>
+                {% endif %}
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выход</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        {% if user.role == 'tutor' %}
+            <nav class="shell page-tabs" aria-label="Разделы кабинета">
+                <a href="{% url 'tutor_dashboard' %}"><i class="fa-solid fa-chart-line"></i>Обзор</a>
+                <a href="{% url 'my_students' %}"><i class="fa-solid fa-users"></i>Ученики</a>
+                <a href="{% url 'manage_slots' %}"><i class="fa-regular fa-calendar"></i>Расписание</a>
+                <a class="active" href="{% url 'chat_list' %}"><i class="fa-regular fa-message"></i>Сообщения</a>
+                <a href="{% url 'tutor_profile_edit' %}"><i class="fa-regular fa-user"></i>Профиль</a>
+            </nav>
+        {% endif %}
+
+        <section class="shell workspace-hero">
+            <div>
+                <h1>Сообщения</h1>
+                <p>Переписки по урокам, заявкам и учебным материалам собраны в одном месте.</p>
+            </div>
+            {% if user.role == 'student' %}
+                <a href="{% url 'tutor_catalog' %}" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i>Найти репетитора</a>
+            {% endif %}
+        </section>
+
+        <section class="shell chat-list-page">
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if conversations %}
+                <div class="conversation-list">
+                    {% for conv in conversations %}
+                        <a href="{% url 'chat_detail' conv.id %}" class="conversation-card">
+                            {% if user.role == 'student' %}
+                                <img src="https://ui-avatars.com/api/?name={{ conv.tutor.get_full_name|default:conv.tutor.username|urlencode }}&size=144&background=10367d&color=fff&bold=true" alt="{{ conv.tutor.get_full_name|default:conv.tutor.username }}">
+                                <div class="conversation-body">
+                                    <div class="conversation-head">
+                                        <h3>{{ conv.tutor.get_full_name|default:conv.tutor.username }}</h3>
+                                        {% if conv.last_message %}<time>{{ conv.last_message.created_at|date:"d.m H:i" }}</time>{% endif %}
+                                    </div>
+                                    {% if conv.last_message %}
+                                        <p>{{ conv.last_message.text|truncatewords:16 }}</p>
+                                    {% else %}
+                                        <p>Сообщений пока нет. Начните диалог.</p>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <img src="https://ui-avatars.com/api/?name={{ conv.student.get_full_name|default:conv.student.username|urlencode }}&size=144&background=10367d&color=fff&bold=true" alt="{{ conv.student.get_full_name|default:conv.student.username }}">
+                                <div class="conversation-body">
+                                    <div class="conversation-head">
+                                        <h3>{{ conv.student.get_full_name|default:conv.student.username }}</h3>
+                                        {% if conv.last_message %}<time>{{ conv.last_message.created_at|date:"d.m H:i" }}</time>{% endif %}
+                                    </div>
+                                    {% if conv.last_message %}
+                                        <p>{{ conv.last_message.text|truncatewords:16 }}</p>
+                                    {% else %}
+                                        <p>Сообщений пока нет. Начните диалог.</p>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-panel">
+                    <i class="fa-regular fa-comments"></i>
+                    <h3>Активных чатов пока нет</h3>
+                    <p>Переписки появятся после заявки на урок или начала общения с преподавателем.</p>
+                    {% if user.role == 'student' %}
+                        <div class="empty-actions">
+                            <a href="{% url 'tutor_catalog' %}" class="btn btn-primary">Перейти в каталог</a>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>
+

@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Отклонить репетитора — Znanium Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a href="{% url 'home' %}" class="brand">Znanium Admin</a>
+            <div class="header-actions">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-ghost">Панель</a>
+                <a href="{% url 'tutor_detail_admin' tutor.id %}" class="btn btn-ghost">
+                    <i class="fa-solid fa-arrow-left"></i> К анкете
+                </a>
+                <a href="{% url 'logout' %}" class="btn btn-primary">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Модерация</span>
+                <h1>Отклонить анкету</h1>
+                <p>{{ tutor.user.get_full_name|default:tutor.user.username }} получит статус “Отклонен”. Причину можно использовать для обратной связи.</p>
+            </div>
+        </section>
+
+        <section class="shell workspace-grid solo-grid narrow-grid">
+            <article class="form-card">
+                <form method="post" class="auth-form">
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        <div class="form-field full">
+                            <label for="reason">Причина отклонения *</label>
+                            <textarea id="reason" name="reason" rows="6" placeholder="Например: добавьте диплом, заполните описание, уточните предметы" required></textarea>
+                            <span class="field-help">Сейчас причина не отправляется автоматически, но будет полезна администратору.</span>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <a href="{% url 'tutor_detail_admin' tutor.id %}" class="btn btn-soft">Отмена</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-times"></i> Отклонить
+                        </button>
+                    </div>
+                </form>
+            </article>
+        </section>
+    </main>
+</body>
+</html>
+

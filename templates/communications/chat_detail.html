@@ -1,0 +1,226 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Чат с {{ other_user.get_full_name|default:other_user.username }} — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                <a class="btn btn-ghost" href="{% url 'chat_list' %}"><i class="fa-solid fa-arrow-left"></i>К чатам</a>
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выход</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        {% if user.role == 'tutor' %}
+            <nav class="shell page-tabs" aria-label="Разделы кабинета">
+                <a href="{% url 'tutor_dashboard' %}"><i class="fa-solid fa-chart-line"></i>Обзор</a>
+                <a href="{% url 'my_students' %}"><i class="fa-solid fa-users"></i>Ученики</a>
+                <a href="{% url 'manage_slots' %}"><i class="fa-regular fa-calendar"></i>Расписание</a>
+                <a class="active" href="{% url 'chat_list' %}"><i class="fa-regular fa-message"></i>Сообщения</a>
+                <a href="{% url 'tutor_profile_edit' %}"><i class="fa-regular fa-user"></i>Профиль</a>
+            </nav>
+        {% endif %}
+
+        <section class="shell chat-page">
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="chat-panel">
+                <div class="chat-header">
+                    <img class="chat-avatar" src="https://ui-avatars.com/api/?name={{ other_user.get_full_name|default:other_user.username|urlencode }}&size=144&background=74b4d9&color=10367d&bold=true" alt="{{ other_user.get_full_name|default:other_user.username }}">
+                    <div>
+                        <h1>{{ other_user.get_full_name|default:other_user.username }}</h1>
+                        <p>{{ other_user.get_role_display }}</p>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    {% for msg in chat_messages %}
+                        <div class="chat-message {% if msg.sender == user %}chat-message-sent{% else %}chat-message-received{% endif %}" data-message-id="{{ msg.id }}">
+                            <div>{{ msg.text }}</div>
+                            {% if msg.attachment %}
+                                <a href="{{ msg.attachment.url }}" target="_blank" class="chat-attachment">
+                                    <i class="fa-solid fa-paperclip"></i>Вложение
+                                </a>
+                            {% endif %}
+                            <div class="chat-message-time">{{ msg.created_at|date:"d.m.Y H:i" }}</div>
+                        </div>
+                    {% empty %}
+                        <div class="chat-empty" id="chatEmpty">
+                            <i class="fa-regular fa-comment-dots"></i>
+                            <h3>Начните общение</h3>
+                            <p>Задайте вопрос по уроку, времени или материалам.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <form method="post" enctype="multipart/form-data" class="chat-input" id="chatForm">
+                    {% csrf_token %}
+                    <div class="chat-input-row">
+                        <textarea name="text" id="messageText" rows="2" placeholder="Введите сообщение..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendMessage();}"></textarea>
+                        <label for="attachment" class="btn btn-soft btn-icon" title="Прикрепить файл">
+                            <i class="fa-solid fa-paperclip"></i>
+                        </label>
+                        <input type="file" id="attachment" name="attachment">
+                        <button type="button" onclick="sendMessage()" class="btn btn-primary btn-icon" title="Отправить">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    {% if not conversation.is_paid_relationship %}
+                        <p class="chat-note">
+                            <i class="fa-solid fa-circle-info"></i>Ссылки на мессенджеры запрещены до первой оплаты.
+                        </p>
+                    {% endif %}
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const conversationId = {{ conversation.id }};
+        const currentUserId = {{ user.id }};
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        let chatSocket = null;
+        let useWebSocket = false;
+
+        try {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/chat/${conversationId}/`;
+            chatSocket = new WebSocket(wsUrl);
+
+            chatSocket.onopen = function() {
+                useWebSocket = true;
+            };
+
+            chatSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                if (data.type === 'chat_message') {
+                    addMessageToChat(data.message);
+                }
+            };
+
+            chatSocket.onclose = function() {
+                useWebSocket = false;
+            };
+
+            chatSocket.onerror = function() {
+                useWebSocket = false;
+            };
+        } catch (e) {
+            useWebSocket = false;
+        }
+
+        function scrollToBottom() {
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+
+        function addMessageToChat(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const emptyState = document.getElementById('chatEmpty');
+
+            if (document.querySelector(`[data-message-id="${message.id}"]`)) {
+                return;
+            }
+
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            const isSent = message.sender_id === currentUserId;
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${isSent ? 'chat-message-sent' : 'chat-message-received'}`;
+            messageDiv.setAttribute('data-message-id', message.id);
+
+            const textDiv = document.createElement('div');
+            textDiv.textContent = message.text;
+            messageDiv.appendChild(textDiv);
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'chat-message-time';
+            const date = new Date(message.created_at);
+            timeDiv.textContent = date.toLocaleString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            messageDiv.appendChild(timeDiv);
+
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        async function sendMessage() {
+            const textInput = document.getElementById('messageText');
+            const attachmentInput = document.getElementById('attachment');
+            const text = textInput.value.trim();
+
+            if (!text && !attachmentInput.files.length) return;
+
+            if (text && !attachmentInput.files.length && useWebSocket && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({
+                    'type': 'chat_message',
+                    'text': text
+                }));
+                textInput.value = '';
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('text', text);
+                formData.append('csrfmiddlewaretoken', csrfToken);
+                if (attachmentInput.files.length) {
+                    formData.append('attachment', attachmentInput.files[0]);
+                }
+
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    textInput.value = '';
+                    attachmentInput.value = '';
+                    window.location.reload();
+                } else {
+                    const data = await response.text();
+                    if (data.includes('запрещённые ссылки')) {
+                        alert('Сообщение содержит запрещённые ссылки. Обменивайтесь контактами только после первой оплаты.');
+                    } else {
+                        alert('Ошибка при отправке сообщения');
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при отправке сообщения');
+            }
+        }
+
+        scrollToBottom();
+    </script>
+</body>
+</html>
+

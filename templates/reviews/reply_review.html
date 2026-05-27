@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ответить на отзыв — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                <a class="btn btn-ghost" href="{% url 'tutor_dashboard' %}">Кабинет</a>
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Отзывы</span>
+                <h1>Ответ на отзыв</h1>
+                <p>Ответ будет отображаться в публичном профиле рядом с отзывом ученика.</p>
+            </div>
+        </section>
+
+        <section class="shell workspace-grid solo-grid narrow-grid">
+            <div class="workspace-stack">
+                <article class="review-preview-card">
+                    <div class="review-head">
+                        <div>
+                            <h3>{{ review.student.get_full_name|default:review.student.username }}</h3>
+                            <div class="stars-line">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.score %}
+                                        <i class="fa-solid fa-star"></i>
+                                    {% else %}
+                                        <i class="fa-regular fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <span class="item-muted">{{ review.created_at|date:"d.m.Y" }}</span>
+                    </div>
+                    <p>{{ review.text|default:"Ученик оставил оценку без текстового комментария." }}</p>
+                </article>
+
+                <article class="form-card">
+                    <form method="post" class="auth-form">
+                        {% csrf_token %}
+                        <div class="form-grid">
+                            <div class="form-field full">
+                                <label for="reply">Ваш ответ *</label>
+                                <textarea id="reply" name="reply" rows="6" placeholder="Поблагодарите ученика и кратко ответьте на отзыв" required>{% if review.tutor_reply %}{{ review.tutor_reply }}{% endif %}</textarea>
+                                <span class="field-help">Ответ должен быть спокойным и полезным для будущих учеников.</span>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <a href="{% url 'tutor_dashboard' %}" class="btn btn-soft">Отмена</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa-solid fa-reply"></i> Опубликовать ответ
+                            </button>
+                        </div>
+                    </form>
+                </article>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
+

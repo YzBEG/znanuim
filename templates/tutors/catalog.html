@@ -1,0 +1,321 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Каталог репетиторов — Znanium</title>
+    <meta name="description" content="Каталог проверенных онлайн-репетиторов Znanium с фильтрами по предмету, цене, формату и опыту.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/catalog_redesign.css' %}?v=10">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <nav class="main-nav" aria-label="Основная навигация">
+                <a href="{% url 'home' %}#steps">Как работает</a>
+                <a href="{% url 'home' %}#subjects">Предметы</a>
+                <a href="{% url 'home' %}#about">О платформе</a>
+                <a href="{% url 'home' %}#faq">FAQ</a>
+                <a href="{% url 'home' %}#lead">Оставить заявку</a>
+                {% if user.is_staff %}
+                    <a href="{% url 'admin_dashboard' %}">Админ-панель</a>
+                {% endif %}
+            </nav>
+            <div class="header-actions">
+                {% if user.is_authenticated %}
+                    {% if user.is_staff or user.role == 'admin' or user.role == 'moderator' %}
+                        <a class="btn btn-ghost" href="{% url 'admin_dashboard' %}">Панель</a>
+                    {% elif user.role == 'tutor' %}
+                        <a class="btn btn-ghost" href="{% url 'tutor_dashboard' %}">Кабинет</a>
+                    {% else %}
+                        <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Кабинет</a>
+                    {% endif %}
+                    <a class="btn btn-primary" href="{% url 'logout' %}">Выход</a>
+                {% else %}
+                    <a class="btn btn-ghost" href="{% url 'login' %}">Войти</a>
+                    <a class="btn btn-primary" href="{% url 'register_choice' %}">Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="catalog-hero">
+            <div class="shell catalog-hero-grid">
+                <div>
+                    <h1>Найдите репетитора под свою цель</h1>
+                    <p>Фильтруйте анкеты по предмету, цене, формату и стажу. Карточки показывают самое важное перед переходом к профилю.</p>
+                </div>
+                <div class="catalog-summary">
+                    <strong>{{ tutors.count }}</strong>
+                    <span>репетиторов найдено</span>
+                    <a class="btn btn-light" href="{% url 'home' %}#lead">Нужна помощь с подбором</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="catalog-section">
+            <div class="shell catalog-layout">
+                <aside class="filters-panel">
+                    <form method="get" class="catalog-filters">
+                        <div class="filter-title">
+                            <strong>Фильтры</strong>
+                            <span>Подберите преподавателя</span>
+                        </div>
+
+                        <div class="filter-group filter-search">
+                            <label for="q">Поиск</label>
+                            <div class="field-control">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="q" name="q" placeholder="Имя, предмет" value="{{ filters.q }}">
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Предмет</label>
+                            <input type="hidden" name="subject" value="{{ filters.subject }}">
+                            <div class="soft-select" data-soft-select>
+                                <button type="button" aria-haspopup="listbox" aria-expanded="false">
+                                    {% if filters.subject %}
+                                        {% for subject in subjects %}{% if filters.subject == subject.id|stringformat:"s" %}{{ subject.name }}{% endif %}{% endfor %}
+                                    {% else %}
+                                        Все предметы
+                                    {% endif %}
+                                </button>
+                                <div class="soft-select-menu" role="listbox">
+                                    <button type="button" data-value="">Все предметы</button>
+                                    {% for subject in subjects %}
+                                        <button type="button" data-value="{{ subject.id }}">{{ subject.name }}</button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Формат</label>
+                            <input type="hidden" name="format" value="{{ filters.format }}">
+                            <div class="soft-select" data-soft-select>
+                                <button type="button" aria-haspopup="listbox" aria-expanded="false">
+                                    {% if filters.format == 'online' %}Онлайн{% elif filters.format == 'offline' %}Очный{% elif filters.format == 'both' %}Очно и онлайн{% else %}Любой{% endif %}
+                                </button>
+                                <div class="soft-select-menu" role="listbox">
+                                    <button type="button" data-value="">Любой</button>
+                                    <button type="button" data-value="online">Онлайн</button>
+                                    <button type="button" data-value="offline">Очный</button>
+                                    <button type="button" data-value="both">Очно и онлайн</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="city">Город</label>
+                            <div class="field-control">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <input type="text" id="city" name="city" placeholder="Москва" value="{{ filters.city }}">
+                            </div>
+                        </div>
+
+                        <div class="filter-split">
+                            <div class="filter-group">
+                                <label for="min_price">Цена от</label>
+                                <div class="field-control">
+                                    <input type="number" id="min_price" name="min_price" placeholder="500" value="{{ filters.min_price }}" min="0" step="100">
+                                </div>
+                            </div>
+
+                            <div class="filter-group">
+                                <label for="max_price">Цена до</label>
+                                <div class="field-control">
+                                    <input type="number" id="max_price" name="max_price" placeholder="5000" value="{{ filters.max_price }}" min="0" step="100">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Сортировка</label>
+                            <input type="hidden" name="sort" value="{{ filters.sort }}">
+                            <div class="soft-select" data-soft-select>
+                                <button type="button" aria-haspopup="listbox" aria-expanded="false">
+                                    {% if filters.sort == 'price_asc' %}Сначала дешевле{% elif filters.sort == 'price_desc' %}Сначала дороже{% elif filters.sort == 'experience' %}По стажу{% else %}По рейтингу{% endif %}
+                                </button>
+                                <div class="soft-select-menu" role="listbox">
+                                    <button type="button" data-value="rating">По рейтингу</button>
+                                    <button type="button" data-value="price_asc">Сначала дешевле</button>
+                                    <button type="button" data-value="price_desc">Сначала дороже</button>
+                                    <button type="button" data-value="experience">По стажу</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filter-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                Найти
+                            </button>
+                            <a href="{% url 'tutor_catalog' %}" class="btn btn-soft">
+                                <i class="fa-solid fa-rotate-right"></i>
+                                Сбросить
+                            </a>
+                        </div>
+                    </form>
+                </aside>
+
+                <div class="catalog-content">
+                    <div class="catalog-results-bar">
+                        <div>
+                            <strong>{{ tutors.count }}</strong>
+                            <span>подходящих преподавателей</span>
+                        </div>
+                        <div class="catalog-tools">
+                            <button type="button" class="view-toggle active" data-view="grid" aria-pressed="true" aria-label="Показать карточки в 3 ряда">
+                                <i class="fa-solid fa-grip"></i>
+                            </button>
+                            <button type="button" class="view-toggle" data-view="list" aria-pressed="false" aria-label="Показать по 1 репетитору в ряду">
+                                <i class="fa-solid fa-bars"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {% if tutors %}
+                        <div class="tutor-grid">
+                            {% for tutor in tutors %}
+                                <article class="tutor-card">
+                                    <div class="tutor-card-top">
+                                        <img src="{% if tutor.photo %}{{ tutor.photo }}{% else %}https://ui-avatars.com/api/?name={{ tutor.user.get_full_name|default:tutor.user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}"
+                                             alt="{{ tutor.user.get_full_name|default:tutor.user.username }}"
+                                             class="tutor-avatar">
+                                        <span class="format-badge">{{ tutor.get_lesson_format_display }}</span>
+                                    </div>
+
+                                    <div class="tutor-title">
+                                        <h2>{{ tutor.user.get_full_name|default:tutor.user.username }}</h2>
+                                        <div class="tutor-meta">
+                                            <span class="rating"><i class="fa-solid fa-star"></i> {{ tutor.rating|floatformat:1 }}</span>
+                                            <span>{{ tutor.review_count }} отзывов</span>
+                                            <span>{{ tutor.experience_years }} лет</span>
+                                            {% if tutor.city %}<span>{{ tutor.city }}</span>{% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="tutor-subjects">
+                                        {% for subject in tutor.subjects.all|slice:":3" %}
+                                            <span class="subject-tag">{{ subject.name }}</span>
+                                        {% endfor %}
+                                        {% if tutor.subjects.count > 3 %}
+                                            <span class="subject-tag extra">+{{ tutor.subjects.count|add:"-3" }}</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <p class="tutor-bio">{{ tutor.bio|truncatewords:16|default:"Опытный репетитор с индивидуальным подходом к ученику и понятной программой занятий." }}</p>
+
+                                    <div class="tutor-card-bottom">
+                                        <div class="tutor-price">
+                                            <strong>{{ tutor.price_per_hour|floatformat:0 }} ₽</strong>
+                                            <span>за час</span>
+                                        </div>
+                                        <div class="tutor-actions">
+                                            <a href="{% url 'tutor_detail' tutor.id %}" class="btn btn-primary">Подробнее</a>
+                                            {% if user.is_authenticated and user.role == 'student' %}
+                                                <a href="{% url 'book_lesson' tutor.id %}" class="btn btn-soft">Записаться</a>
+                                            {% elif user.is_authenticated %}
+                                                <a href="{% url 'tutor_detail' tutor.id %}" class="btn btn-soft">Открыть</a>
+                                            {% else %}
+                                                <a href="{% url 'login' %}" class="btn btn-soft">Записаться</a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                            <h2>Репетиторы не найдены</h2>
+                            <p>Попробуйте убрать часть фильтров или оставить заявку, чтобы мы помогли с подбором.</p>
+                            <div class="empty-actions">
+                                <a href="{% url 'tutor_catalog' %}" class="btn btn-primary">Сбросить фильтры</a>
+                                <a href="{% url 'home' %}#lead" class="btn btn-soft">Оставить заявку</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="shell footer-inner">
+            <div>
+                <a class="brand" href="{% url 'home' %}">Znanium</a>
+                <p>Онлайн-платформа для подбора репетиторов и проведения занятий.</p>
+            </div>
+            <nav aria-label="Навигация в футере">
+                <a href="{% url 'home' %}#steps">Как работает</a>
+                <a href="{% url 'home' %}#subjects">Предметы</a>
+                <a href="{% url 'home' %}#about">О платформе</a>
+                <a href="{% url 'home' %}#faq">FAQ</a>
+                <a href="{% url 'home' %}#lead">Оставить заявку</a>
+            </nav>
+        </div>
+    </footer>
+    <script>
+        document.querySelectorAll('[data-soft-select]').forEach((select) => {
+            const trigger = select.querySelector('button[aria-haspopup="listbox"]');
+            const input = select.previousElementSibling;
+            const options = select.querySelectorAll('.soft-select-menu button');
+
+            trigger.addEventListener('click', () => {
+                const isOpen = select.classList.toggle('is-open');
+                trigger.setAttribute('aria-expanded', String(isOpen));
+                document.querySelectorAll('[data-soft-select].is-open').forEach((other) => {
+                    if (other !== select) {
+                        other.classList.remove('is-open');
+                        other.querySelector('button[aria-haspopup="listbox"]').setAttribute('aria-expanded', 'false');
+                    }
+                });
+            });
+
+            options.forEach((option) => {
+                option.addEventListener('click', () => {
+                    trigger.textContent = option.textContent;
+                    input.value = option.dataset.value;
+                    select.classList.remove('is-open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                });
+            });
+        });
+
+        document.addEventListener('click', (event) => {
+            if (event.target.closest('[data-soft-select]')) {
+                return;
+            }
+
+            document.querySelectorAll('[data-soft-select].is-open').forEach((select) => {
+                select.classList.remove('is-open');
+                select.querySelector('button[aria-haspopup="listbox"]').setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        const tutorGrid = document.querySelector('.tutor-grid');
+        document.querySelectorAll('[data-view]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const view = button.dataset.view;
+                document.querySelectorAll('[data-view]').forEach((item) => {
+                    item.classList.toggle('active', item === button);
+                    item.setAttribute('aria-pressed', String(item === button));
+                });
+
+                if (tutorGrid) {
+                    tutorGrid.classList.toggle('is-list-view', view === 'list');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

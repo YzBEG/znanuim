@@ -1,0 +1,237 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Расписание — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выход</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <nav class="shell page-tabs" aria-label="Разделы кабинета">
+            <a href="{% url 'tutor_dashboard' %}"><i class="fa-solid fa-chart-line"></i>Обзор</a>
+            <a href="{% url 'my_students' %}"><i class="fa-solid fa-users"></i>Ученики</a>
+            <a class="active" href="{% url 'manage_slots' %}"><i class="fa-regular fa-calendar"></i>Расписание</a>
+            <a href="{% url 'chat_list' %}"><i class="fa-regular fa-message"></i>Сообщения</a>
+            <a href="{% url 'tutor_profile_edit' %}"><i class="fa-regular fa-user"></i>Профиль</a>
+        </nav>
+
+        <section class="shell workspace-hero">
+            <div>
+                <h1>Свободное время для записи</h1>
+                <p>Добавляйте слоты на ближайшие дни. Ученики смогут выбрать их на странице записи.</p>
+            </div>
+        </section>
+
+        <section class="shell workspace-grid">
+            <div class="workspace-stack">
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <article class="slot-form-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Добавить слот</h2>
+                            <p>По умолчанию урок длится один час. Время окончания можно изменить после выбора начала.</p>
+                        </div>
+                        <span class="status-pill status-approved"><i class="fa-solid fa-plus"></i>Новый слот</span>
+                    </div>
+
+                    <form method="post" class="form-grid">
+                        {% csrf_token %}
+                        <div class="form-field">
+                            <label>Дата занятия</label>
+                            <input type="hidden" id="date" name="date" value="{{ date_options.0.value }}">
+                            <div class="soft-select" data-soft-select>
+                                <button type="button" aria-haspopup="listbox" aria-expanded="false">{{ date_options.0.label }}</button>
+                                <div class="soft-select-menu" role="listbox">
+                                    {% for option in date_options %}
+                                        <button type="button" data-value="{{ option.value }}">{{ option.label }}</button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label>Начало</label>
+                            <input type="hidden" id="start_time" name="start_time" value="">
+                            <div class="soft-select" data-soft-select data-time-start>
+                                <button type="button" aria-haspopup="listbox" aria-expanded="false">Выберите время</button>
+                                <div class="soft-select-menu" role="listbox">
+                                    {% for time in time_options %}
+                                        <button type="button" data-value="{{ time }}">{{ time }}</button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label>Окончание</label>
+                            <input type="hidden" id="end_time" name="end_time" value="">
+                            <div class="soft-select" data-soft-select data-time-end>
+                                <button type="button" aria-haspopup="listbox" aria-expanded="false">Выберите время</button>
+                                <div class="soft-select-menu" role="listbox">
+                                    {% for time in time_options %}
+                                        <button type="button" data-value="{{ time }}">{{ time }}</button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <span class="field-help">Автоматически подставим +1 час, но поле можно изменить.</span>
+                        </div>
+                        <div class="form-field">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-calendar-plus"></i>Добавить слот</button>
+                        </div>
+                    </form>
+                </article>
+
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Мои слоты</h2>
+                            <p>Ближайшие 30 дней. Забронированные слоты нельзя удалить до обработки заявки.</p>
+                        </div>
+                    </div>
+
+                    {% if slots %}
+                        <div class="list-stack">
+                            {% for slot in slots %}
+                                <div class="slot-row">
+                                    <div>
+                                        <h3 class="item-title">{{ slot.start_at|date:"d.m.Y" }}</h3>
+                                        <div class="item-line">
+                                            <span><i class="fa-regular fa-clock"></i>{{ slot.start_at|date:"H:i" }} - {{ slot.end_at|date:"H:i" }}</span>
+                                            <span><i class="fa-regular fa-calendar"></i>{{ slot.start_at|date:"l" }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-actions">
+                                        {% if slot.is_booked %}
+                                            <span class="status-pill status-booked"><i class="fa-solid fa-lock"></i>Забронирован</span>
+                                        {% else %}
+                                            <span class="status-pill status-approved"><i class="fa-solid fa-check"></i>Свободен</span>
+                                            <form method="post" action="{% url 'delete_slot' slot.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger" onclick="return confirm('Удалить этот слот?')">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                    Удалить
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-panel">
+                            <i class="fa-regular fa-calendar"></i>
+                            <h3>Слотов пока нет</h3>
+                            <p>Добавьте свободное время, чтобы ученики могли записаться на урок.</p>
+                        </div>
+                    {% endif %}
+                </article>
+            </div>
+
+            <aside class="side-stack">
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Подсказка</h2>
+                            <p>Лучше добавлять несколько вариантов времени на неделю вперёд: так ученикам проще выбрать удобный слот.</p>
+                        </div>
+                    </div>
+                    <div class="quick-links">
+                        <a href="{% url 'tutor_dashboard' %}">Вернуться в кабинет <i class="fa-solid fa-arrow-right"></i></a>
+                        <a href="{% url 'my_students' %}">Мои ученики <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+            </aside>
+        </section>
+    </main>
+
+    <script>
+        document.querySelectorAll('[data-soft-select]').forEach((select) => {
+            const trigger = select.querySelector('button[aria-haspopup="listbox"]');
+            const input = select.previousElementSibling;
+            const options = select.querySelectorAll('.soft-select-menu button');
+
+            trigger.addEventListener('click', () => {
+                const isOpen = select.classList.toggle('is-open');
+                trigger.setAttribute('aria-expanded', String(isOpen));
+                document.querySelectorAll('[data-soft-select].is-open').forEach((other) => {
+                    if (other !== select) {
+                        other.classList.remove('is-open');
+                        other.querySelector('button[aria-haspopup="listbox"]').setAttribute('aria-expanded', 'false');
+                    }
+                });
+            });
+
+            options.forEach((option) => {
+                option.addEventListener('click', () => {
+                    trigger.textContent = option.textContent;
+                    input.value = option.dataset.value;
+                    select.classList.remove('is-open');
+                    trigger.setAttribute('aria-expanded', 'false');
+
+                    if (select.matches('[data-time-start]')) {
+                        setDefaultEndTime(option.dataset.value);
+                    }
+                });
+            });
+        });
+
+        document.addEventListener('click', (event) => {
+            if (event.target.closest('[data-soft-select]')) {
+                return;
+            }
+
+            document.querySelectorAll('[data-soft-select].is-open').forEach((select) => {
+                select.classList.remove('is-open');
+                select.querySelector('button[aria-haspopup="listbox"]').setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        function setDefaultEndTime(startValue) {
+            const endInput = document.getElementById('end_time');
+            const endSelect = document.querySelector('[data-time-end]');
+            const endTrigger = endSelect.querySelector('button[aria-haspopup="listbox"]');
+            const [hours, minutes] = startValue.split(':').map(Number);
+            const nextHour = Math.min(hours + 1, 23);
+            const endValue = `${String(nextHour).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+            const endOption = endSelect.querySelector(`[data-value="${endValue}"]`);
+
+            endInput.value = endOption ? endValue : startValue;
+            endTrigger.textContent = endOption ? endOption.textContent : startValue;
+        }
+
+        document.querySelector('.slot-form-card form').addEventListener('submit', (event) => {
+            const startInput = document.getElementById('start_time');
+            const endInput = document.getElementById('end_time');
+
+            if (!startInput.value || !endInput.value) {
+                event.preventDefault();
+                alert('Выберите время начала и окончания занятия.');
+            }
+        });
+    </script>
+</body>
+</html>
+
+

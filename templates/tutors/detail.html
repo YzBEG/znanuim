@@ -1,0 +1,281 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ tutor.user.get_full_name|default:tutor.user.username }} — Znanium</title>
+    <meta name="description" content="Профиль репетитора {{ tutor.user.get_full_name|default:tutor.user.username }} на платформе Znanium. Предметы, формат занятий, отзывы и стоимость урока.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_profile_redesign.css' %}?v=5">
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <nav class="main-nav" aria-label="Основная навигация">
+                <a href="{% url 'home' %}#steps">Как работает</a>
+                <a href="{% url 'home' %}#subjects">Предметы</a>
+                <a href="{% url 'home' %}#about">О платформе</a>
+                <a href="{% url 'home' %}#faq">FAQ</a>
+                <a href="{% url 'home' %}#lead">Оставить заявку</a>
+                {% if user.is_staff %}
+                    <a href="{% url 'admin_dashboard' %}">Админ-панель</a>
+                {% endif %}
+            </nav>
+            <div class="header-actions">
+                {% if user.is_authenticated %}
+                    {% if user.is_staff or user.role == 'admin' or user.role == 'moderator' %}
+                        <a class="btn btn-ghost" href="{% url 'admin_dashboard' %}">Панель</a>
+                    {% elif user.role == 'tutor' %}
+                        <a class="btn btn-ghost" href="{% url 'tutor_dashboard' %}">Кабинет</a>
+                    {% else %}
+                        <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Кабинет</a>
+                    {% endif %}
+                    <a class="btn btn-primary" href="{% url 'logout' %}">Выход</a>
+                {% else %}
+                    <a class="btn btn-ghost" href="{% url 'login' %}">Войти</a>
+                    <a class="btn btn-primary" href="{% url 'register_choice' %}">Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="profile-page">
+        <div class="shell breadcrumbs">
+            <a href="{% url 'home' %}">Главная</a>
+            <span>/</span>
+            <a href="{% url 'tutor_catalog' %}">Каталог</a>
+            <span>/</span>
+            <span>{{ tutor.user.get_full_name|default:tutor.user.username }}</span>
+        </div>
+
+        <div class="shell profile-layout">
+            <aside class="profile-nav" aria-label="Навигация по профилю">
+                <a href="#info" class="active">Информация</a>
+                <a href="#subjects">Предметы</a>
+                <a href="#about">О преподавателе</a>
+                <a href="#formats">Форматы</a>
+                <a href="#education">Образование</a>
+                <a href="#reviews">Отзывы</a>
+            </aside>
+
+            <section class="profile-main">
+                <article class="profile-hero-card" id="info">
+                    <div class="profile-photo-wrap">
+                        <img src="{% if tutor.photo %}{{ tutor.photo }}{% else %}https://ui-avatars.com/api/?name={{ tutor.user.get_full_name|default:tutor.user.username|urlencode }}&size=240&background=10367d&color=fff&bold=true{% endif %}"
+                             alt="{{ tutor.user.get_full_name|default:tutor.user.username }}"
+                             class="profile-photo">
+                        <span class="availability {% if tutor_is_online %}is-online{% else %}is-offline{% endif %}">
+                            {% if tutor_is_online %}В сети{% else %}Не в сети{% endif %}
+                        </span>
+                    </div>
+
+                    <div class="hero-content">
+                        <div class="hero-topline">
+                            <span><i class="fa-solid fa-star"></i> {{ tutor.rating|floatformat:1 }}</span>
+                            <span>{{ tutor.review_count }} отзывов</span>
+                            {% if tutor.identity_verified %}
+                                <span class="verified"><i class="fa-solid fa-circle-check"></i> Документы проверены</span>
+                            {% endif %}
+                        </div>
+                        <h1>{{ tutor.user.get_full_name|default:tutor.user.username }}</h1>
+                        <div class="hero-facts">
+                            <div>
+                                <span>Стаж</span>
+                                <strong>{{ tutor.experience_years }} лет</strong>
+                            </div>
+                            <div>
+                                <span>Формат</span>
+                                <strong>{{ tutor.get_lesson_format_display }}</strong>
+                            </div>
+                            {% if tutor.city %}
+                            <div>
+                                <span>Город</span>
+                                <strong>{{ tutor.city }}</strong>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+
+                <section class="content-section" id="subjects">
+                    <div class="section-head">
+                        <h2>Предметы</h2>
+                    </div>
+                    <div class="subject-list">
+                        {% for subject in tutor.subjects.all %}
+                            <div class="subject-row">
+                                <div>
+                                    <strong>{% if subject.icon %}<i class="fa-solid {{ subject.icon }}"></i>{% endif %}{{ subject.name }}</strong>
+                                    <span>Индивидуальная программа под уровень ученика</span>
+                                </div>
+                                <div class="subject-price">от {{ tutor.price_per_hour|floatformat:0 }} ₽/час</div>
+                            </div>
+                        {% empty %}
+                            <div class="empty-line">Предметы пока не указаны.</div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="content-section" id="about">
+                    <h2>О преподавателе</h2>
+                    <div class="text-card">
+                        <p>{{ tutor.bio|default:"Преподаватель пока не добавил описание. Можно перейти к записи и уточнить детали перед первым занятием." }}</p>
+                    </div>
+                </section>
+
+                <section class="content-section" id="formats">
+                    <h2>Варианты занятий</h2>
+                    <div class="lesson-options">
+                        {% if tutor.lesson_format == 'online' or tutor.lesson_format == 'both' %}
+                            <div class="lesson-option">
+                                <i class="fa-solid fa-video"></i>
+                                <div>
+                                    <strong>Занятия онлайн</strong>
+                                    <span>Урок проходит дистанционно, материалы остаются в личном кабинете.</span>
+                                </div>
+                                <b>от {{ tutor.price_per_hour|floatformat:0 }} ₽</b>
+                            </div>
+                        {% endif %}
+                        {% if tutor.lesson_format == 'offline' or tutor.lesson_format == 'both' %}
+                            <div class="lesson-option">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <div>
+                                    <strong>Очные занятия</strong>
+                                    <span>{% if tutor.city %}Город: {{ tutor.city }}.{% else %}Место занятий уточняется с преподавателем.{% endif %}</span>
+                                </div>
+                                <b>от {{ tutor.price_per_hour|floatformat:0 }} ₽</b>
+                            </div>
+                        {% endif %}
+                    </div>
+                </section>
+
+                <section class="content-section" id="education">
+                    <h2>Образование и документы</h2>
+                    <div class="education-card">
+                        <div class="document-status">
+                            <i class="fa-solid fa-circle-check"></i>
+                            {% if tutor.diploma %}
+                                Диплом загружен
+                            {% else %}
+                                Информация уточняется
+                            {% endif %}
+                        </div>
+                        <p>Профиль прошёл модерацию Znanium. Документы и данные преподавателя проверяются перед публикацией анкеты.</p>
+                        {% if tutor.diploma %}
+                            <a class="document-link" href="{{ tutor.diploma.url }}" target="_blank" rel="noopener">
+                                <i class="fa-solid fa-file-lines"></i>
+                                Посмотреть документ
+                            </a>
+                        {% endif %}
+                    </div>
+                </section>
+
+                <section class="content-section" id="reviews">
+                    <div class="section-head">
+                        <h2>Отзывы</h2>
+                        {% if tutor.review_count > 3 %}
+                            <a href="{% url 'tutor_reviews' tutor.id %}">Все отзывы</a>
+                        {% endif %}
+                    </div>
+
+                    {% if reviews %}
+                        <div class="reviews-list">
+                            {% for review in reviews|slice:":3" %}
+                                <article class="review-card">
+                                    <div class="review-head">
+                                        <div>
+                                            <strong>{{ review.student.get_full_name|default:review.student.username }}</strong>
+                                            <span>{{ review.created_at|date:"d.m.Y" }}</span>
+                                        </div>
+                                        <div class="review-stars">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.score %}
+                                                    <i class="fa-solid fa-star"></i>
+                                                {% else %}
+                                                    <i class="fa-regular fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <p>{{ review.text|default:"Ученик оставил оценку без текстового комментария." }}</p>
+                                    {% if review.tutor_reply %}
+                                        <div class="reply">
+                                            <strong>Ответ преподавателя</strong>
+                                            <p>{{ review.tutor_reply }}</p>
+                                        </div>
+                                    {% endif %}
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-line">Отзывов пока нет.</div>
+                    {% endif %}
+                </section>
+            </section>
+
+            <aside class="contact-card">
+                {% if tutor.intro_video %}
+                    <video controls class="profile-video">
+                        <source src="{{ tutor.intro_video.url }}" type="video/mp4">
+                    </video>
+                {% endif %}
+
+                <div class="contact-rating">
+                    <strong><i class="fa-solid fa-star"></i> {{ tutor.rating|floatformat:1 }}</strong>
+                    <span>{{ tutor.review_count }} отзывов</span>
+                    <strong>от {{ tutor.price_per_hour|floatformat:0 }} ₽</strong>
+                    <span>стоимость урока</span>
+                </div>
+
+                {% if user.is_authenticated and user.role == 'student' %}
+                    <a href="{% url 'book_lesson' tutor.id %}" class="btn btn-primary">Записаться</a>
+                    <a href="{% url 'start_chat' tutor.user.id %}" class="btn btn-soft">Написать</a>
+                {% elif user.is_authenticated %}
+                    <a href="{% url 'tutor_catalog' %}" class="btn btn-primary">Вернуться в каталог</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary">Войти для записи</a>
+                    <a href="{% url 'register_choice' %}" class="btn btn-soft">Создать аккаунт</a>
+                {% endif %}
+
+                <div class="contact-stats">
+                    <div>
+                        <strong>{{ tutor.profile_views.count }}</strong>
+                        <span>просмотров анкеты</span>
+                    </div>
+                    <div>
+                        <strong>{{ tutor.experience_years }} лет</strong>
+                        <span>опыта преподавания</span>
+                    </div>
+                    <div>
+                        <strong>{{ tutor.subjects.count }}</strong>
+                        <span>предметов в профиле</span>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="shell footer-inner">
+            <div>
+                <a class="brand" href="{% url 'home' %}">Znanium</a>
+                <p>Онлайн-платформа для подбора репетиторов и проведения занятий.</p>
+            </div>
+            <nav aria-label="Навигация в футере">
+                <a href="{% url 'home' %}#steps">Как работает</a>
+                <a href="{% url 'home' %}#subjects">Предметы</a>
+                <a href="{% url 'home' %}#about">О платформе</a>
+                <a href="{% url 'home' %}#faq">FAQ</a>
+                <a href="{% url 'home' %}#lead">Оставить заявку</a>
+            </nav>
+        </div>
+    </footer>
+</body>
+</html>
+

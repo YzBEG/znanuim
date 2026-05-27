@@ -1,0 +1,114 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Регистрация ученика — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=11">
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                <a class="btn btn-ghost" href="{% url 'register_choice' %}">Назад</a>
+                <a class="btn btn-primary" href="{% url 'login' %}">Войти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="auth-page">
+        <section class="shell auth-layout">
+            <aside class="auth-side">
+                <span class="role-icon"><i class="fa-solid fa-user-graduate"></i></span>
+                <h1>Аккаунт ученика</h1>
+                <p>После регистрации вы сможете выбирать преподавателей, бронировать уроки и получать материалы занятий.</p>
+                <div class="auth-steps">
+                    <span><i class="fa-solid fa-check"></i> Подбор репетитора</span>
+                    <span><i class="fa-solid fa-check"></i> Запись на свободный слот</span>
+                    <span><i class="fa-solid fa-check"></i> Материалы и сообщения</span>
+                </div>
+            </aside>
+
+            <article class="auth-card">
+                <div class="auth-card-head">
+                    <h2>Регистрация</h2>
+                    <p>Заполните данные для входа и будущих заявок на уроки.</p>
+                </div>
+
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" class="auth-form">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="id_username">Логин *</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}<span class="field-error">{{ form.username.errors.0 }}</span>{% endif %}
+                        </div>
+                        <div class="form-field">
+                            <label for="id_email">Email *</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
+                        </div>
+                        <div class="form-field">
+                            <label for="id_first_name">Имя *</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}<span class="field-error">{{ form.first_name.errors.0 }}</span>{% endif %}
+                        </div>
+                        <div class="form-field">
+                            <label for="id_last_name">Фамилия *</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}<span class="field-error">{{ form.last_name.errors.0 }}</span>{% endif %}
+                        </div>
+                        <div class="form-field">
+                            <label for="id_phone">Телефон</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}<span class="field-error">{{ form.phone.errors.0 }}</span>{% endif %}
+                        </div>
+                        <div class="form-field">
+                            <label for="id_class_level">Класс</label>
+                            {{ form.class_level }}
+                            {% if form.class_level.errors %}<span class="field-error">{{ form.class_level.errors.0 }}</span>{% endif %}
+                        </div>
+                        <div class="form-field full">
+                            <label for="id_learning_goal">Цель обучения</label>
+                            {{ form.learning_goal }}
+                            {% if form.learning_goal.errors %}<span class="field-error">{{ form.learning_goal.errors.0 }}</span>{% endif %}
+                        </div>
+                        <div class="form-field">
+                            <label for="id_password1">Пароль *</label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}<span class="field-error">{{ form.password1.errors.0 }}</span>{% endif %}
+                        </div>
+                        <div class="form-field">
+                            <label for="id_password2">Повтор пароля *</label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}<span class="field-error">{{ form.password2.errors.0 }}</span>{% endif %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary auth-submit">Создать аккаунт</button>
+                </form>
+
+                <p class="auth-switch">Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a></p>
+            </article>
+        </section>
+    </main>
+</body>
+</html>
+
+

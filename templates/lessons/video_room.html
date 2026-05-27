@@ -1,0 +1,357 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Видеоурок — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=12">
+    <script src="{% static 'js/notifications.js' %}?v=2" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                {% if is_tutor %}
+                    <a class="btn btn-ghost" href="{% url 'tutor_dashboard' %}">Кабинет</a>
+                {% else %}
+                    <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Кабинет</a>
+                {% endif %}
+                <a class="btn btn-ghost" href="{% url 'lesson_materials' order.id %}">Материалы</a>
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page video-page">
+        <section class="shell workspace-hero video-hero">
+            <div>
+                <span class="student-chip">Видеоурок</span>
+                <h1>{{ order.slot.start_at|date:"d.m.Y H:i" }}</h1>
+                <p>
+                    {% if is_tutor %}
+                        Ученик: {{ order.student.get_full_name|default:order.student.username }}.
+                    {% else %}
+                        Репетитор: {{ order.tutor.get_full_name|default:order.tutor.username }}.
+                    {% endif %}
+                    Видеосвязь работает через WebRTC, медиапоток шифруется средствами браузера.
+                </p>
+            </div>
+            <div class="inline-actions">
+                <button class="btn btn-primary" type="button" id="startCallBtn"><i class="fa-solid fa-video"></i>Подключиться</button>
+                <button class="btn btn-soft" type="button" id="copyRoomBtn"><i class="fa-regular fa-copy"></i>Ссылка</button>
+            </div>
+        </section>
+
+        <section class="shell video-layout">
+            <article class="video-stage">
+                <div class="video-tile remote-tile">
+                    <video id="remoteVideo" autoplay playsinline></video>
+                    <div class="video-placeholder" id="remotePlaceholder">
+                        <i class="fa-solid fa-user"></i>
+                        <span>Ожидаем второго участника</span>
+                    </div>
+                    <div class="video-label" id="remoteLabel">Собеседник</div>
+                </div>
+
+                <div class="video-tile local-tile">
+                    <video id="localVideo" autoplay playsinline muted></video>
+                    <div class="video-placeholder" id="localPlaceholder">
+                        <i class="fa-solid fa-video-slash"></i>
+                        <span>Камера выключена</span>
+                    </div>
+                    <div class="video-label">Вы</div>
+                </div>
+            </article>
+
+            <aside class="video-side workspace-card">
+                <h2>Управление</h2>
+                <p id="callStatus">Нажмите «Подключиться», чтобы открыть камеру и микрофон.</p>
+                <div class="video-controls">
+                    <button class="btn btn-soft" type="button" id="toggleMicBtn" disabled><i class="fa-solid fa-microphone"></i>Микрофон</button>
+                    <button class="btn btn-soft" type="button" id="toggleCameraBtn" disabled><i class="fa-solid fa-video"></i>Камера</button>
+                    <button class="btn btn-danger" type="button" id="endCallBtn" disabled><i class="fa-solid fa-phone-slash"></i>Завершить</button>
+                    {% if is_tutor %}
+                        <a class="btn btn-primary" href="{% url 'complete_lesson' order.id %}" onclick="return confirm('Отметить урок как проведённый?')">
+                            <i class="fa-solid fa-check"></i>Отметить урок проведённым
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="video-note">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <div>
+                        <strong>Шифрование</strong>
+                        <span>WebRTC использует DTLS-SRTP. Для внешнего сервера нужны HTTPS, WSS и TURN.</span>
+                    </div>
+                </div>
+            </aside>
+        </section>
+    </main>
+
+    {{ order.id|json_script:"video-order-id" }}
+    {{ user.id|json_script:"video-user-id" }}
+    {{ is_tutor|json_script:"video-is-tutor" }}
+    <script>
+        const orderId = JSON.parse(document.getElementById('video-order-id').textContent);
+        const currentUserId = JSON.parse(document.getElementById('video-user-id').textContent);
+        const isTutor = JSON.parse(document.getElementById('video-is-tutor').textContent);
+
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const localPlaceholder = document.getElementById('localPlaceholder');
+        const remotePlaceholder = document.getElementById('remotePlaceholder');
+        const remoteLabel = document.getElementById('remoteLabel');
+        const callStatus = document.getElementById('callStatus');
+        const startCallBtn = document.getElementById('startCallBtn');
+        const toggleMicBtn = document.getElementById('toggleMicBtn');
+        const toggleCameraBtn = document.getElementById('toggleCameraBtn');
+        const endCallBtn = document.getElementById('endCallBtn');
+        const copyRoomBtn = document.getElementById('copyRoomBtn');
+
+        let socket;
+        let peerConnection;
+        let localStream;
+        let hasAudioTrack = false;
+        let hasVideoTrack = false;
+        let remoteDescriptionReady = false;
+        const pendingCandidates = [];
+
+        function setStatus(text) {
+            callStatus.textContent = text;
+        }
+
+        function sendSignal(payload) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(payload));
+            }
+        }
+
+        function createPeerConnection() {
+            const pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+            });
+
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    sendSignal({ type: 'ice-candidate', candidate: event.candidate });
+                }
+            };
+
+            pc.ontrack = (event) => {
+                remoteVideo.srcObject = event.streams[0];
+                remotePlaceholder.hidden = true;
+                setStatus('Соединение установлено.');
+            };
+
+            pc.onconnectionstatechange = () => {
+                if (pc.connectionState === 'connected') {
+                    setStatus('Участники подключены.');
+                }
+                if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) {
+                    setStatus('Собеседник отключился или соединение прервано.');
+                }
+            };
+
+            return pc;
+        }
+
+        async function ensureMedia() {
+            if (localStream) {
+                return;
+            }
+
+            const attempts = [
+                { video: true, audio: true, label: 'камера и микрофон' },
+                { video: false, audio: true, label: 'микрофон' },
+                { video: true, audio: false, label: 'камера' },
+            ];
+
+            for (const attempt of attempts) {
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({
+                        video: attempt.video,
+                        audio: attempt.audio,
+                    });
+                    setStatus(`Подключаемся: доступен ${attempt.label}.`);
+                    break;
+                } catch (error) {
+                    localStream = null;
+                }
+            }
+
+            if (localStream) {
+                localVideo.srcObject = localStream;
+                localStream.getTracks().forEach((track) => peerConnection.addTrack(track, localStream));
+                hasAudioTrack = localStream.getAudioTracks().length > 0;
+                hasVideoTrack = localStream.getVideoTracks().length > 0;
+                localPlaceholder.hidden = hasVideoTrack;
+            } else {
+                hasAudioTrack = false;
+                hasVideoTrack = false;
+                localPlaceholder.hidden = false;
+                setStatus('Устройства не найдены или доступ запрещён. Подключаемся без камеры и микрофона.');
+            }
+
+            if (!hasAudioTrack) {
+                peerConnection.addTransceiver('audio', { direction: 'recvonly' });
+            }
+            if (!hasVideoTrack) {
+                peerConnection.addTransceiver('video', { direction: 'recvonly' });
+            }
+
+            toggleMicBtn.disabled = !hasAudioTrack;
+            toggleCameraBtn.disabled = !hasVideoTrack;
+            toggleMicBtn.classList.toggle('btn-primary', hasAudioTrack);
+            toggleCameraBtn.classList.toggle('btn-primary', hasVideoTrack);
+        }
+
+        async function addPendingCandidates() {
+            while (pendingCandidates.length) {
+                await peerConnection.addIceCandidate(pendingCandidates.shift());
+            }
+        }
+
+        async function createOffer() {
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            sendSignal({ type: 'offer', offer });
+            setStatus('Отправляем приглашение второму участнику.');
+        }
+
+        async function handleOffer(offer) {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            remoteDescriptionReady = true;
+            await addPendingCandidates();
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            sendSignal({ type: 'answer', answer });
+            setStatus('Отвечаем на приглашение.');
+        }
+
+        async function handleAnswer(answer) {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+            remoteDescriptionReady = true;
+            await addPendingCandidates();
+            setStatus('Ожидаем медиапоток собеседника.');
+        }
+
+        async function startCall() {
+            startCallBtn.disabled = true;
+            setStatus('Запрашиваем доступ к камере и микрофону.');
+            peerConnection = createPeerConnection();
+            await ensureMedia();
+
+            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            socket = new WebSocket(`${protocol}://${window.location.host}/ws/video/${orderId}/`);
+
+            socket.addEventListener('open', () => {
+                endCallBtn.disabled = false;
+                setStatus('Комната открыта. Ждём второго участника.');
+                sendSignal({ type: 'ready' });
+            });
+
+            socket.addEventListener('message', async (event) => {
+                const data = JSON.parse(event.data);
+                if (data.sender_id === currentUserId) {
+                    return;
+                }
+
+                if (data.sender_name) {
+                    remoteLabel.textContent = data.sender_name;
+                }
+
+                if (data.type === 'ready' && isTutor) {
+                    await createOffer();
+                } else if (data.type === 'offer') {
+                    await handleOffer(data.offer);
+                } else if (data.type === 'answer') {
+                    await handleAnswer(data.answer);
+                } else if (data.type === 'ice-candidate' && data.candidate) {
+                    const candidate = new RTCIceCandidate(data.candidate);
+                    if (remoteDescriptionReady) {
+                        await peerConnection.addIceCandidate(candidate);
+                    } else {
+                        pendingCandidates.push(candidate);
+                    }
+                } else if (data.type === 'participant_joined') {
+                    setStatus(`${data.sender_name || 'Собеседник'} подключается.`);
+                } else if (data.type === 'participant_left' || data.type === 'call-ended') {
+                    setStatus(`${data.sender_name || 'Собеседник'} вышел из урока.`);
+                    remoteVideo.srcObject = null;
+                    remotePlaceholder.hidden = false;
+                }
+            });
+
+            socket.addEventListener('close', () => {
+                setStatus('Соединение с комнатой закрыто.');
+            });
+        }
+
+        function stopCall() {
+            sendSignal({ type: 'call-ended' });
+            if (localStream) {
+                localStream.getTracks().forEach((track) => track.stop());
+            }
+            if (peerConnection) {
+                peerConnection.close();
+            }
+            if (socket) {
+                socket.close();
+            }
+            localVideo.srcObject = null;
+            remoteVideo.srcObject = null;
+            localPlaceholder.hidden = false;
+            remotePlaceholder.hidden = false;
+            startCallBtn.disabled = false;
+            toggleMicBtn.disabled = true;
+            toggleCameraBtn.disabled = true;
+            endCallBtn.disabled = true;
+            localStream = null;
+            peerConnection = null;
+            hasAudioTrack = false;
+            hasVideoTrack = false;
+            remoteDescriptionReady = false;
+            pendingCandidates.length = 0;
+            setStatus('Звонок завершён.');
+        }
+
+        startCallBtn.addEventListener('click', async () => {
+            try {
+                await startCall();
+            } catch (error) {
+                startCallBtn.disabled = false;
+                setStatus('Не получилось подключиться к комнате. Обновите страницу и попробуйте ещё раз.');
+            }
+        });
+
+        toggleMicBtn.addEventListener('click', () => {
+            const audioTrack = localStream && localStream.getAudioTracks()[0];
+            if (!audioTrack) return;
+            audioTrack.enabled = !audioTrack.enabled;
+            toggleMicBtn.classList.toggle('btn-primary', audioTrack.enabled);
+            sendSignal({ type: 'mic-state', enabled: audioTrack.enabled });
+        });
+
+        toggleCameraBtn.addEventListener('click', () => {
+            const videoTrack = localStream && localStream.getVideoTracks()[0];
+            if (!videoTrack) return;
+            videoTrack.enabled = !videoTrack.enabled;
+            localPlaceholder.hidden = videoTrack.enabled;
+            toggleCameraBtn.classList.toggle('btn-primary', videoTrack.enabled);
+            sendSignal({ type: 'camera-state', enabled: videoTrack.enabled });
+        });
+
+        endCallBtn.addEventListener('click', stopCall);
+
+        copyRoomBtn.addEventListener('click', async () => {
+            await navigator.clipboard.writeText(window.location.href);
+            setStatus('Ссылка на видеокомнату скопирована.');
+        });
+    </script>
+</body>
+</html>
