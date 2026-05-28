@@ -4,7 +4,6 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import Q
 from .models import Conversation, Message, Notification, create_notification
 from users.models import User
 
@@ -44,18 +43,15 @@ def chat_detail(request, conversation_id):
     
     if request.method == 'POST':
         text = request.POST.get('text', '').strip()
-        attachment = request.FILES.get('attachment')
         
-        if text or attachment:
+        if text:
             message = Message(
                 conversation=conversation,
                 sender=request.user,
                 text=text
             )
             
-            if attachment:
-                message.attachment = attachment
-            
+
             # Проверяем на запрещённый контент
             if message.has_forbidden_content():
                 messages.error(request, 'Сообщение содержит запрещённые ссылки. Обменивайтесь контактами только после первой оплаты.')
@@ -65,7 +61,7 @@ def chat_detail(request, conversation_id):
                 create_notification(
                     recipient=recipient,
                     title='Новое сообщение',
-                    body=f"{request.user.get_full_name() or request.user.username}: {(message.text or 'Файл')[:80]}",
+                    body=f"{request.user.get_full_name() or request.user.username}: {message.text[:80]}",
                     url=f"/chat/{conversation.id}/",
                     kind=Notification.Kind.MESSAGE,
                 )
@@ -167,3 +163,4 @@ def submit_lead(request):
     if next_url.startswith('/'):
         return redirect(next_url)
     return redirect('home')
+

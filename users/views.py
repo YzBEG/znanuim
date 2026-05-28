@@ -218,19 +218,6 @@ def tutor_profile_edit(request):
         # Обработка файлов - только если загружены новые
         if 'diploma' in request.FILES:
             profile.diploma = request.FILES['diploma']
-        if 'intro_video' in request.FILES:
-            profile.intro_video = request.FILES['intro_video']
-        if 'photo_upload' in request.FILES:
-            from pathlib import Path
-            from uuid import uuid4
-            from django.conf import settings
-            from django.core.files.storage import default_storage
-
-            uploaded_photo = request.FILES['photo_upload']
-            suffix = Path(uploaded_photo.name).suffix.lower() or '.jpg'
-            photo_path = default_storage.save(f"tutors/photos/{request.user.id}_{uuid4().hex}{suffix}", uploaded_photo)
-            media_url = settings.MEDIA_URL if settings.MEDIA_URL.startswith('/') else f"/{settings.MEDIA_URL}"
-            profile.photo = f"{media_url}{photo_path}"
         
         # Сохраняем профиль
         profile.save()

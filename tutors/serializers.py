@@ -27,7 +27,7 @@ class TutorProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'full_name', 'subjects', 'bio', 'experience_years',
             'price_per_hour', 'lesson_format', 'city',
-            'diploma', 'intro_video', 'rating', 'rating_display', 'review_count',
+            'diploma', 'rating', 'rating_display', 'review_count',
             'verification_status', 'identity_verified'
         ]
         read_only_fields = ['id', 'rating', 'review_count', 'verification_status', 'identity_verified']

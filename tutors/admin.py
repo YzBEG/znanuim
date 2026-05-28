@@ -15,6 +15,7 @@ class TutorProfileAdmin(admin.ModelAdmin):
     list_filter = ("verification_status", "lesson_format", "city")
     search_fields = ("user__username", "user__first_name", "user__last_name", "city")
     filter_horizontal = ("subjects",)
+    exclude = ("intro_video",)
 
 
 @admin.register(ProfileView)

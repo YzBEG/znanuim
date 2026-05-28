@@ -57,11 +57,6 @@
                     {% for msg in chat_messages %}
                         <div class="chat-message {% if msg.sender == user %}chat-message-sent{% else %}chat-message-received{% endif %}" data-message-id="{{ msg.id }}">
                             <div>{{ msg.text }}</div>
-                            {% if msg.attachment %}
-                                <a href="{{ msg.attachment.url }}" target="_blank" class="chat-attachment">
-                                    <i class="fa-solid fa-paperclip"></i>Вложение
-                                </a>
-                            {% endif %}
                             <div class="chat-message-time">{{ msg.created_at|date:"d.m.Y H:i" }}</div>
                         </div>
                     {% empty %}
@@ -73,7 +68,7 @@
                     {% endfor %}
                 </div>
 
-                <form method="post" enctype="multipart/form-data" class="chat-input" id="chatForm">
+                <form method="post" class="chat-input" id="chatForm">
                     {% csrf_token %}
                     <div class="chat-input-row">
                         <textarea name="text" id="messageText" rows="2" placeholder="Введите сообщение..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendMessage();}"></textarea>

@@ -62,9 +62,8 @@
                     <div class="photo-upload">
                         <img src="{% if profile.photo %}{{ profile.photo }}{% else %}https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}" alt="{{ user.get_full_name|default:user.username }}">
                         <div>
-                            <label for="photo_upload">Фото репетитора</label>
-                            <input type="file" id="photo_upload" name="photo_upload" accept="image/*">
-                            <span class="field-help">Загрузите портретное фото. Оно появится в каталоге и публичном профиле.</span>
+                            <label>Аватар преподавателя</label>
+                            <span class="field-help">Пока используется автоматически сформированный аватар. Загрузка фото и видео временно отключена.</span>
                         </div>
                     </div>
 
@@ -137,8 +136,8 @@
 
                     <div class="section-head" style="margin-top: 28px;">
                         <div>
-                            <h2>Документы и видео</h2>
-                            <p>Файлы не обязательны, но повышают доверие к профилю.</p>
+                            <h2>Документы</h2>
+                            <p>Сейчас доступна только загрузка диплома или сертификата.</p>
                         </div>
                     </div>
 
@@ -153,17 +152,6 @@
                             {% endif %}
                             <input type="file" id="diploma" name="diploma" accept=".pdf,.jpg,.jpeg,.png">
                             <span class="field-help">PDF, JPG или PNG.</span>
-                        </div>
-                        <div class="form-field">
-                            <label for="intro_video">Видео-визитка</label>
-                            {% if profile.intro_video %}
-                                <div class="file-current">
-                                    <span><i class="fa-solid fa-video"></i> Видео загружено</span>
-                                    <a href="{{ profile.intro_video.url }}" target="_blank" rel="noopener">Открыть</a>
-                                </div>
-                            {% endif %}
-                            <input type="file" id="intro_video" name="intro_video" accept="video/*">
-                            <span class="field-help">Короткое видео-представление преподавателя.</span>
                         </div>
                     </div>
 

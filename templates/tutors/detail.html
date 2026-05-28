@@ -221,12 +221,6 @@
             </section>
 
             <aside class="contact-card">
-                {% if tutor.intro_video %}
-                    <video controls class="profile-video">
-                        <source src="{{ tutor.intro_video.url }}" type="video/mp4">
-                    </video>
-                {% endif %}
-
                 <div class="contact-rating">
                     <strong><i class="fa-solid fa-star"></i> {{ tutor.rating|floatformat:1 }}</strong>
                     <span>{{ tutor.review_count }} отзывов</span>
@@ -279,4 +273,3 @@
     </footer>
 </body>
 </html>
-
