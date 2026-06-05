@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=14">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=15">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=4" defer></script>
 </head>
@@ -85,7 +85,7 @@
                     <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
                     <span>Баланс</span>
                     <strong>{{ wallet.balance|floatformat:0 }} ₽</strong>
-                    <small>Вывод средств появится позже</small>
+                    <small>Выплаты после комиссии 12%</small>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-graduation-cap"></i></div>
@@ -104,6 +104,90 @@
                     <span>Просмотры</span>
                     <strong>{{ total_views }}</strong>
                     <small>7 дней: {{ views_last_7_days }} · 30 дней: {{ views_last_30_days }}</small>
+                </article>
+            </section>
+
+            <section class="workspace-grid finance-layout">
+                <article class="workspace-card finance-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Платные услуги</h2>
+                            <p>Демо-списание с баланса репетитора. Средства поступают директору платформы.</p>
+                        </div>
+                    </div>
+                    <div class="service-grid">
+                        <div class="service-card">
+                            <div>
+                                <span class="service-label">Размещение анкеты</span>
+                                <strong>{{ listing_fee|floatformat:0 }} ₽ / 30 дней</strong>
+                                {% if listing_active %}
+                                    <small>Оплачено до {{ listing_paid_until|date:"d.m.Y" }}</small>
+                                {% else %}
+                                    <small>Нужно для демонстрации платного размещения</small>
+                                {% endif %}
+                            </div>
+                            <form method="post" action="{% url 'pay_listing_fee' %}">
+                                {% csrf_token %}
+                                <button class="btn {% if listing_active %}btn-soft{% else %}btn-primary{% endif %}" type="submit">
+                                    {% if listing_active %}Продлить{% else %}Оплатить{% endif %}
+                                </button>
+                            </form>
+                        </div>
+                        <div class="service-card pro-card">
+                            <div>
+                                <span class="service-label">Znanium Pro</span>
+                                <strong>{{ pro_fee|floatformat:0 }} ₽ / 30 дней</strong>
+                                {% if pro_active %}
+                                    <small>Активна до {{ pro_paid_until|date:"d.m.Y" }}</small>
+                                {% else %}
+                                    <small>Премиум-статус для анкеты репетитора</small>
+                                {% endif %}
+                            </div>
+                            <form method="post" action="{% url 'buy_pro_subscription' %}">
+                                {% csrf_token %}
+                                <button class="btn {% if pro_active %}btn-soft{% else %}btn-primary{% endif %}" type="submit">
+                                    {% if pro_active %}Продлить{% else %}Купить Pro{% endif %}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <form class="money-form compact-money-form" method="post" action="{% url 'top_up_balance' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <label>
+                            <span>Демо-пополнение, ₽</span>
+                            <input type="number" name="amount" min="100" step="100" value="2000" required>
+                        </label>
+                        <button class="btn btn-soft" type="submit"><i class="fa-solid fa-plus"></i>Пополнить баланс</button>
+                    </form>
+                </article>
+
+                <article class="workspace-card finance-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Операции</h2>
+                            <p>Выплаты за уроки, оплата услуг и демо-пополнения.</p>
+                        </div>
+                    </div>
+                    {% if recent_transactions %}
+                        <div class="transaction-list">
+                            {% for transaction in recent_transactions %}
+                                <div class="transaction-row">
+                                    <div>
+                                        <strong>{{ transaction.get_type_display }}</strong>
+                                        <span>{{ transaction.created_at|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                    <b>{{ transaction.amount|floatformat:0 }} ₽</b>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-panel compact-empty">
+                            <i class="fa-regular fa-credit-card"></i>
+                            <h3>Операций пока нет</h3>
+                            <p>После проведённых уроков и оплаты услуг история появится здесь.</p>
+                        </div>
+                    {% endif %}
                 </article>
             </section>
 

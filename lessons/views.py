@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from .models import AvailabilitySlot, LessonOrder, LessonSession
 from communications.models import Notification, create_notification
+from payments.services import complete_paid_lesson, get_wallet, money
 from tutors.models import TutorProfile
 
 
@@ -148,6 +149,15 @@ def book_lesson(request, tutor_id):
     if request.method == 'POST':
         slot_id = request.POST.get('slot_id')
         slot = get_object_or_404(AvailabilitySlot, id=slot_id, tutor=tutor_profile, is_booked=False)
+        wallet = get_wallet(request.user)
+        lesson_price = money(tutor_profile.price_per_hour)
+
+        if wallet.balance < lesson_price:
+            messages.error(
+                request,
+                f"Для записи нужно {lesson_price:.0f} ₽. Пополните демо-баланс в личном кабинете.",
+            )
+            return redirect('student_dashboard')
         
         # Создаём заказ
         order = LessonOrder.objects.create(
@@ -179,10 +189,15 @@ def book_lesson(request, tutor_id):
         is_booked=False,
         start_at__gte=timezone.now()
     ).order_by('start_at')[:20]
+    student_wallet = get_wallet(request.user)
+    lesson_price = money(tutor_profile.price_per_hour)
     
     context = {
         'tutor': tutor_profile,
         'slots': available_slots,
+        'wallet': student_wallet,
+        'lesson_price': lesson_price,
+        'has_enough_balance': student_wallet.balance >= lesson_price,
     }
     return render(request, 'lessons/book_lesson.html', context)
 
@@ -263,6 +278,12 @@ def cancel_order(request, order_id):
 def complete_lesson(request, order_id):
     """Завершение урока репетитором"""
     order = get_object_or_404(LessonOrder, id=order_id, tutor=request.user, status='confirmed')
+    try:
+        payment_created = complete_paid_lesson(order)
+    except ValueError as error:
+        messages.error(request, str(error))
+        return redirect('tutor_dashboard')
+
     order.status = 'completed'
     order.save()
     if hasattr(order, "session"):
@@ -275,7 +296,10 @@ def complete_lesson(request, order_id):
         url=reverse("lesson_materials", args=[order.id]),
         kind=Notification.Kind.LESSON,
     )
-    messages.success(request, 'Урок завершён')
+    if payment_created:
+        messages.success(request, 'Урок завершён. Оплата списана, выплата и комиссия рассчитаны.')
+    else:
+        messages.success(request, 'Урок уже был завершён и оплачен ранее.')
     return redirect('tutor_dashboard')
 
 
@@ -376,6 +400,12 @@ def video_lesson(request, order_id):
         if request.user == order.tutor:
             return redirect('tutor_dashboard')
         return redirect('student_dashboard')
+
+    if request.user == order.student:
+        wallet = get_wallet(request.user)
+        if wallet.balance < money(order.price):
+            messages.error(request, 'Недостаточно средств для начала урока. Пополните демо-баланс.')
+            return redirect('student_dashboard')
 
     session, _ = LessonSession.objects.get_or_create(
         order=order,

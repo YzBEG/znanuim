@@ -1,10 +1,12 @@
 """Views для админ-панели модерации"""
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
-from django.db.models import Count
+from django.db.models import Count, Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from communications.models import Conversation, LeadRequest
 from lessons.models import LessonOrder
+from payments.models import Transaction
+from payments.services import get_director_user, get_wallet
 from reviews.models import Review
 from tutors.models import TutorProfile
 from users.models import User
@@ -22,6 +24,10 @@ def admin_dashboard(request):
     lead_status_counts = dict(
         LeadRequest.objects.values_list("status").annotate(count=Count("id"))
     )
+    director = get_director_user()
+    director_wallet = get_wallet(director)
+    platform_income = Transaction.objects.filter(user=director).aggregate(total=Sum("amount"))["total"] or 0
+    recent_platform_transactions = Transaction.objects.filter(user=director).order_by("-created_at")[:5]
 
     context = {
         "users_total": User.objects.count(),
@@ -41,6 +47,10 @@ def admin_dashboard(request):
         "leads_closed": lead_status_counts.get("closed", 0),
         "conversations_total": Conversation.objects.count(),
         "reviews_total": Review.objects.count(),
+        "director": director,
+        "director_wallet": director_wallet,
+        "platform_income": platform_income,
+        "recent_platform_transactions": recent_platform_transactions,
         "recent_tutors": TutorProfile.objects.select_related("user").prefetch_related("subjects").order_by("-id")[:5],
         "recent_leads": LeadRequest.objects.order_by("-created_at")[:5],
         "recent_orders": LessonOrder.objects.select_related("student", "tutor", "slot").order_by("-created_at")[:5],

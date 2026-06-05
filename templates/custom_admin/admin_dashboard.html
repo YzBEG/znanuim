@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=14">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=15">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=4" defer></script>
 </head>
@@ -74,6 +74,12 @@
                     <strong>{{ reviews_total }}</strong>
                     <small>оценок после проведённых уроков</small>
                 </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-ruble-sign"></i></div>
+                    <span>Доход платформы</span>
+                    <strong>{{ director_wallet.balance|floatformat:0 }} ₽</strong>
+                    <small>баланс пользователя {{ director.username }}</small>
+                </article>
             </div>
 
             <div class="admin-panel-grid">
@@ -123,6 +129,35 @@
                     </div>
                 </article>
             </div>
+
+            <article class="workspace-card">
+                <div class="section-head">
+                    <div>
+                        <h2>Финансы платформы</h2>
+                        <p>Комиссия 12%, платное размещение анкет и Znanium Pro поступают на баланс директора.</p>
+                    </div>
+                    <span class="status-pill status-confirmed">{{ platform_income|floatformat:0 }} ₽ всего</span>
+                </div>
+                {% if recent_platform_transactions %}
+                    <div class="transaction-list">
+                        {% for transaction in recent_platform_transactions %}
+                            <div class="transaction-row">
+                                <div>
+                                    <strong>{{ transaction.get_type_display }}</strong>
+                                    <span>{{ transaction.created_at|date:"d.m.Y H:i" }}</span>
+                                </div>
+                                <b>{{ transaction.amount|floatformat:0 }} ₽</b>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-panel compact-empty">
+                        <i class="fa-solid fa-wallet"></i>
+                        <h3>Доходов пока нет</h3>
+                        <p>После завершения урока или оплаты услуг репетитора операции появятся здесь.</p>
+                    </div>
+                {% endif %}
+            </article>
 
             <div class="admin-panel-grid">
                 <article class="workspace-card">

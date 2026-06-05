@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/', include('config.api_urls')),  # REST API
     path('accounts/', include('users.urls')),
     path('lessons/', include('lessons.urls')),
+    path('payments/', include('payments.urls')),
     path('chat/', include('communications.urls')),
     path('reviews/', include('reviews.urls')),
     path('', include('tutors.urls')),

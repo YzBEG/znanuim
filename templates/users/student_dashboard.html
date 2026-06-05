@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=14">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=15">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=4" defer></script>
 </head>
@@ -70,7 +70,7 @@
                     <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
                     <span>Баланс</span>
                     <strong>{{ wallet.balance|floatformat:0 }} ₽</strong>
-                    <small>Пополнение появится позже</small>
+                    <small>Демо-баланс для записи на уроки</small>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-calendar-check"></i></div>
@@ -83,6 +83,55 @@
                     <span>История</span>
                     <strong>{{ past_lessons|length }}</strong>
                     <small>Проведённые занятия</small>
+                </article>
+            </section>
+
+            <section class="workspace-grid finance-layout">
+                <article class="workspace-card finance-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Пополнить баланс</h2>
+                            <p>Демо-пополнение без реальной оплаты. Сумма сразу появится на балансе ученика.</p>
+                        </div>
+                        <span class="status-pill status-confirmed">демо</span>
+                    </div>
+                    <form class="money-form" method="post" action="{% url 'top_up_balance' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <label>
+                            <span>Сумма, ₽</span>
+                            <input type="number" name="amount" min="100" step="100" value="2000" required>
+                        </label>
+                        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i>Пополнить</button>
+                    </form>
+                </article>
+
+                <article class="workspace-card finance-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Последние операции</h2>
+                            <p>Пополнения и списания за проведённые уроки.</p>
+                        </div>
+                    </div>
+                    {% if recent_transactions %}
+                        <div class="transaction-list">
+                            {% for transaction in recent_transactions %}
+                                <div class="transaction-row">
+                                    <div>
+                                        <strong>{{ transaction.get_type_display }}</strong>
+                                        <span>{{ transaction.created_at|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                    <b>{{ transaction.amount|floatformat:0 }} ₽</b>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-panel compact-empty">
+                            <i class="fa-regular fa-credit-card"></i>
+                            <h3>Операций пока нет</h3>
+                            <p>Пополните баланс или завершите первый урок.</p>
+                        </div>
+                    {% endif %}
                 </article>
             </section>
 

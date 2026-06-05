@@ -14,11 +14,15 @@ class Wallet(models.Model):
 
 class Transaction(models.Model):
     class Type(models.TextChoices):
+        TOP_UP = "top_up", "Пополнение баланса"
+        LESSON_PAYMENT = "lesson_payment", "Оплата урока"
         HOLD = "hold", "Холдирование"
         RELEASE = "release", "Разморозка"
         PAYOUT = "payout", "Выплата репетитору"
         REFUND = "refund", "Возврат ученику"
         COMMISSION = "commission", "Комиссия платформы"
+        LISTING_FEE = "listing_fee", "Размещение анкеты"
+        PRO_SUBSCRIPTION = "pro_subscription", "Подписка Znanium Pro"
 
     order = models.ForeignKey(LessonOrder, on_delete=models.CASCADE, related_name="transactions", null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="transactions")

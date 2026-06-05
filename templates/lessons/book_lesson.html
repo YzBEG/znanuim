@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/book_lesson_redesign.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'css/book_lesson_redesign.css' %}?v=3">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=4" defer></script>
 </head>
@@ -93,6 +93,22 @@
                         <i class="fa-regular fa-calendar-check"></i>
                     </div>
 
+                    <div class="balance-check {% if has_enough_balance %}is-ok{% else %}is-warning{% endif %}">
+                        <div>
+                            <span>Ваш баланс</span>
+                            <strong>{{ wallet.balance|floatformat:0 }} ₽</strong>
+                        </div>
+                        <div>
+                            <span>Стоимость урока</span>
+                            <strong>{{ lesson_price|floatformat:0 }} ₽</strong>
+                        </div>
+                        {% if has_enough_balance %}
+                            <p><i class="fa-solid fa-circle-check"></i> Средств достаточно для записи.</p>
+                        {% else %}
+                            <p><i class="fa-solid fa-triangle-exclamation"></i> Пополните баланс в кабинете ученика, чтобы отправить заявку.</p>
+                        {% endif %}
+                    </div>
+
                     {% if slots %}
                         <form method="post" class="booking-form">
                             {% csrf_token %}
@@ -108,9 +124,9 @@
                                 {% endfor %}
                             </div>
 
-                            <button type="submit" class="btn btn-primary submit-button">
+                            <button type="submit" class="btn btn-primary submit-button" {% if not has_enough_balance %}disabled{% endif %}>
                                 <i class="fa-solid fa-paper-plane"></i>
-                                Отправить заявку
+                                {% if has_enough_balance %}Отправить заявку{% else %}Недостаточно средств{% endif %}
                             </button>
                             <p class="submit-note">Заявка появится у преподавателя в личном кабинете. Он сможет подтвердить или отклонить занятие.</p>
                         </form>

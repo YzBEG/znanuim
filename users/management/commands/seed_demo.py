@@ -5,6 +5,8 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from lessons.models import AvailabilitySlot, LessonOrder, LessonSession
+from payments.models import Wallet
+from payments.services import get_director_user
 from tutors.models import Subject, TutorProfile
 from users.models import StudentProfile, User
 
@@ -48,6 +50,8 @@ class Command(BaseCommand):
             last_name="Соловьёв",
             email="tutor@znanium.local",
         )
+        Wallet.objects.update_or_create(user=student, defaults={"balance": Decimal("5000.00")})
+        Wallet.objects.update_or_create(user=tutor, defaults={"balance": Decimal("2000.00")})
 
         StudentProfile.objects.get_or_create(
             user=student,
@@ -78,6 +82,7 @@ class Command(BaseCommand):
         )
         profile.subjects.set(subjects[:3])
 
+        get_director_user()
         self.create_slots_and_order(profile, student, tutor)
 
         self.stdout.write(self.style.SUCCESS("Demo data created."))

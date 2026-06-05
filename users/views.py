@@ -82,10 +82,11 @@ def student_dashboard(request):
         return redirect('home')
     
     from lessons.models import LessonOrder
-    from payments.models import Wallet
+    from payments.models import Transaction, Wallet
     
     # Получаем или создаём кошелёк
     wallet, _ = Wallet.objects.get_or_create(user=request.user)
+    recent_transactions = Transaction.objects.filter(user=request.user).order_by('-created_at')[:6]
     
     # Предстоящие уроки
     upcoming_lessons = LessonOrder.objects.filter(
@@ -101,6 +102,7 @@ def student_dashboard(request):
     
     context = {
         'wallet': wallet,
+        'recent_transactions': recent_transactions,
         'upcoming_lessons': upcoming_lessons,
         'past_lessons': past_lessons,
     }
@@ -115,7 +117,13 @@ def tutor_dashboard(request):
         return redirect('home')
     
     from lessons.models import LessonOrder, AvailabilitySlot
-    from payments.models import Wallet
+    from payments.models import Transaction, Wallet
+    from payments.services import (
+        TUTOR_LISTING_FEE,
+        ZNANIUM_PRO_FEE,
+        service_is_active,
+        service_paid_until,
+    )
     from tutors.models import TutorProfile
     
     # Проверяем наличие профиля
@@ -127,6 +135,11 @@ def tutor_dashboard(request):
     
     # Получаем или создаём кошелёк
     wallet, _ = Wallet.objects.get_or_create(user=request.user)
+    recent_transactions = Transaction.objects.filter(user=request.user).order_by('-created_at')[:6]
+    listing_active = service_is_active(request.user, Transaction.Type.LISTING_FEE)
+    listing_paid_until = service_paid_until(request.user, Transaction.Type.LISTING_FEE)
+    pro_active = service_is_active(request.user, Transaction.Type.PRO_SUBSCRIPTION)
+    pro_paid_until = service_paid_until(request.user, Transaction.Type.PRO_SUBSCRIPTION)
     
     # Заявки от учеников (ожидают подтверждения)
     pending_orders = LessonOrder.objects.filter(
@@ -175,6 +188,13 @@ def tutor_dashboard(request):
     context = {
         'profile': profile,
         'wallet': wallet,
+        'recent_transactions': recent_transactions,
+        'listing_active': listing_active,
+        'listing_paid_until': listing_paid_until,
+        'pro_active': pro_active,
+        'pro_paid_until': pro_paid_until,
+        'listing_fee': TUTOR_LISTING_FEE,
+        'pro_fee': ZNANIUM_PRO_FEE,
         'pending_orders': pending_orders,
         'upcoming_lessons': upcoming_lessons,
         'total_lessons': total_lessons,

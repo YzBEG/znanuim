@@ -326,6 +326,59 @@ input {
   font-size: 22px;
 }
 
+.balance-check {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+  padding: 16px;
+  background: #f7f9fc;
+  border: 1px solid rgba(16, 54, 125, 0.08);
+  border-radius: 20px;
+}
+
+.balance-check div {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.balance-check span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.balance-check strong {
+  color: var(--royal);
+  font-size: 24px;
+}
+
+.balance-check p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.balance-check.is-ok p {
+  color: var(--success);
+}
+
+.balance-check.is-warning {
+  background: rgba(201, 133, 22, 0.1);
+  border-color: rgba(201, 133, 22, 0.22);
+}
+
+.balance-check.is-warning p {
+  color: var(--warning);
+}
+
 .booking-form {
   display: grid;
   gap: 22px;
@@ -409,6 +462,12 @@ input {
 .submit-button {
   width: 100%;
   min-height: 54px;
+}
+
+.submit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  box-shadow: none;
 }
 
 .submit-note {
@@ -592,6 +651,7 @@ input {
 
   .tutor-strip,
   .slot-grid,
+  .balance-check,
   .section-head {
     grid-template-columns: 1fr;
   }
