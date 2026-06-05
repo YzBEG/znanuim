@@ -142,20 +142,12 @@ function initNotificationCenter() {
 
     button.addEventListener('click', () => {
         dropdown.hidden = !dropdown.hidden;
-        if (!dropdown.hidden) {
-            markRead().then((data) => {
-                if (data) {
-                    notifications = notifications.map((item) => ({ ...item, is_read: true }));
-                    render(data.unread_count || 0);
-                }
-            });
-        }
     });
 
     readAllButton.addEventListener('click', () => {
         markRead().then((data) => {
             if (data) {
-                notifications = notifications.map((item) => ({ ...item, is_read: true }));
+                notifications = [];
                 render(data.unread_count || 0);
             }
         });
@@ -170,7 +162,12 @@ function initNotificationCenter() {
     list.addEventListener('click', (event) => {
         const item = event.target.closest('.notification-item');
         if (item) {
-            markRead(item.dataset.id);
+            markRead(item.dataset.id).then((data) => {
+                if (data) {
+                    notifications = notifications.filter((notification) => String(notification.id) !== String(item.dataset.id));
+                    render(data.unread_count || 0);
+                }
+            });
         }
     });
 

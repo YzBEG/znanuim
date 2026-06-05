@@ -667,6 +667,58 @@ textarea {
   margin-bottom: 24px;
 }
 
+.workspace-disclosure {
+  margin: 24px 0;
+}
+
+.workspace-disclosure summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 64px;
+  padding: 0 20px;
+  color: var(--royal);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: 0 14px 34px rgba(16, 54, 125, 0.08);
+  cursor: pointer;
+  list-style: none;
+}
+
+.workspace-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.workspace-disclosure summary::after {
+  content: "\f078";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  color: var(--royal);
+  transition: transform 0.18s ease;
+}
+
+.workspace-disclosure[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.workspace-disclosure summary span,
+.workspace-disclosure summary strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 900;
+}
+
+.workspace-disclosure summary strong {
+  color: var(--ink);
+}
+
+.workspace-disclosure .finance-layout {
+  margin-bottom: 0;
+}
+
 .finance-card {
   align-self: stretch;
 }

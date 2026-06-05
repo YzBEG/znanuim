@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
 from django.http import FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -44,22 +45,34 @@ def manage_slots(request):
             start_dt = timezone.make_aware(start_dt)
             end_dt = timezone.make_aware(end_dt)
             
-            if end_dt <= start_dt:
+            if start_dt.date() <= timezone.localdate():
+                messages.error(request, 'Расписание можно добавлять минимум на следующий день.')
+            elif end_dt <= start_dt:
                 messages.error(request, 'Время окончания должно быть позже времени начала')
             elif start_dt < timezone.now():
                 messages.error(request, 'Нельзя создать слот в прошлом')
+            elif AvailabilitySlot.objects.filter(
+                tutor=profile,
+                start_at__lt=end_dt,
+                end_at__gt=start_dt,
+            ).exists():
+                messages.error(request, 'Это время уже занято или пересекается с другим слотом. Выберите другой интервал.')
             else:
-                AvailabilitySlot.objects.create(
-                    tutor=profile,
-                    start_at=start_dt,
-                    end_at=end_dt
-                )
-                messages.success(request, 'Слот добавлен')
-                return redirect('manage_slots')
+                try:
+                    AvailabilitySlot.objects.create(
+                        tutor=profile,
+                        start_at=start_dt,
+                        end_at=end_dt
+                    )
+                    messages.success(request, 'Слот добавлен')
+                    return redirect('manage_slots')
+                except IntegrityError:
+                    messages.error(request, 'Такой слот уже существует. Выберите другое время.')
         except ValueError:
             messages.error(request, 'Неверный формат даты или времени')
     
     today = timezone.localdate()
+    first_available_date = today + timedelta(days=1)
     weekday_names = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"]
     month_names = [
         "января", "февраля", "марта", "апреля", "мая", "июня",
@@ -67,11 +80,9 @@ def manage_slots(request):
     ]
     date_options = []
     for day_offset in range(30):
-        option_date = today + timedelta(days=day_offset)
+        option_date = first_available_date + timedelta(days=day_offset)
         label = f"{option_date.day} {month_names[option_date.month - 1]}, {weekday_names[option_date.weekday()]}"
         if day_offset == 0:
-            label += " · сегодня"
-        elif day_offset == 1:
             label += " · завтра"
         date_options.append({
             "value": option_date.strftime("%Y-%m-%d"),
@@ -83,13 +94,25 @@ def manage_slots(request):
         for minute in (0, 30):
             time_options.append(f"{hour:02d}:{minute:02d}")
 
+    existing_slots = list(
+        AvailabilitySlot.objects.filter(
+            tutor=profile,
+            start_at__date__gte=first_available_date,
+            start_at__date__lte=first_available_date + timedelta(days=29),
+        ).values("start_at", "end_at")
+    )
     available_time_options_by_date = {}
     for option in date_options:
         available_times = []
         for time_value in time_options:
             slot_dt = datetime.strptime(f"{option['value']} {time_value}", "%Y-%m-%d %H:%M")
             slot_dt = timezone.make_aware(slot_dt)
-            if slot_dt > timezone.now():
+            default_end_dt = slot_dt + timedelta(hours=1)
+            overlaps_existing = any(
+                existing["start_at"] < default_end_dt and existing["end_at"] > slot_dt
+                for existing in existing_slots
+            )
+            if not overlaps_existing:
                 available_times.append(time_value)
         available_time_options_by_date[option["value"]] = available_times
 

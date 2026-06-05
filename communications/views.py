@@ -110,7 +110,7 @@ def start_chat(request, user_id):
 @login_required
 @ensure_csrf_cookie
 def notifications_list(request):
-    notifications = Notification.objects.filter(recipient=request.user)[:8]
+    notifications = Notification.objects.filter(recipient=request.user, is_read=False)[:8]
     return JsonResponse({
         "unread_count": Notification.objects.filter(
             recipient=request.user,
