@@ -71,8 +71,10 @@ function initNotificationCenter() {
     let socket = null;
 
     function render(unreadCount) {
-        badge.hidden = !unreadCount;
-        badge.textContent = unreadCount || 0;
+        const count = Number(unreadCount) || 0;
+        badge.hidden = count <= 0;
+        badge.textContent = count;
+        readAllButton.hidden = count <= 0;
 
         if (!notifications.length) {
             list.innerHTML = '<div class="notification-empty">Пока уведомлений нет</div>';
