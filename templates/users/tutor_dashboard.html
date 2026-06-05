@@ -9,9 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=16">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=17">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
-    <script src="{% static 'js/notifications.js' %}?v=5" defer></script>
+    <script src="{% static 'js/notifications.js' %}?v=6" defer></script>
 </head>
 <body{% if user.is_authenticated %} data-authenticated="1"{% endif %}>
     <header class="site-header">
@@ -148,23 +148,14 @@
                                         <small>Премиум-статус для анкеты репетитора</small>
                                     {% endif %}
                                 </div>
-                                <form method="post" action="{% url 'buy_pro_subscription' %}">
-                                    {% csrf_token %}
-                                    <button class="btn {% if pro_active %}btn-soft{% else %}btn-primary{% endif %}" type="submit">
-                                        {% if pro_active %}Продлить{% else %}Купить Pro{% endif %}
-                                    </button>
-                                </form>
+                                <a class="btn {% if pro_active %}btn-soft{% else %}btn-primary{% endif %}" href="{% url 'buy_pro_subscription' %}">
+                                    {% if pro_active %}Продлить{% else %}Купить Pro{% endif %}
+                                </a>
                             </div>
                         </div>
-                        <form class="money-form compact-money-form" method="post" action="{% url 'top_up_balance' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                            <label>
-                                <span>Демо-пополнение, ₽</span>
-                                <input type="number" name="amount" min="100" step="100" value="2000" required>
-                            </label>
-                            <button class="btn btn-soft" type="submit"><i class="fa-solid fa-plus"></i>Пополнить баланс</button>
-                        </form>
+                        <div class="compact-money-form">
+                            <a class="btn btn-soft" href="{% url 'top_up_balance' %}"><i class="fa-solid fa-plus"></i>Пополнить баланс</a>
+                        </div>
                     </article>
 
                     <article class="workspace-card finance-card">

@@ -2419,6 +2419,262 @@ textarea {
   line-height: 1.45;
 }
 
+.student-balance-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 22px;
+  min-height: 100%;
+  padding: 28px;
+  background: var(--royal);
+  border-radius: 30px;
+  box-shadow: var(--shadow);
+}
+
+.student-balance-card span,
+.balance-side-card span {
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.student-balance-card strong,
+.balance-side-card strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--white);
+  font-size: 48px;
+  line-height: 1;
+}
+
+.student-balance-card p,
+.balance-side-card p {
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.5;
+}
+
+.student-balance-card .btn-primary {
+  color: var(--royal);
+  background: var(--white);
+  box-shadow: none;
+}
+
+.student-tutor-groups {
+  display: grid;
+  gap: 16px;
+}
+
+.student-tutor-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  background: #f7f9fc;
+  border: 1px solid rgba(16, 54, 125, 0.08);
+  border-radius: 24px;
+}
+
+.student-tutor-head,
+.student-group-lesson,
+.student-lesson-actions {
+  display: flex;
+  align-items: center;
+}
+
+.student-tutor-head,
+.student-group-lesson {
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.student-group-lessons {
+  display: grid;
+  gap: 10px;
+}
+
+.student-group-lesson {
+  padding: 14px;
+  background: var(--white);
+  border: 1px solid rgba(16, 54, 125, 0.08);
+  border-radius: 18px;
+}
+
+.student-group-lesson strong,
+.student-group-lesson span {
+  display: block;
+}
+
+.student-group-lesson > div:first-child span {
+  margin-top: 5px;
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.student-lesson-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.payment-card,
+.pro-hero-card {
+  overflow: hidden;
+}
+
+.top-up-form {
+  display: grid;
+  gap: 18px;
+}
+
+.amount-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.amount-grid label {
+  cursor: pointer;
+}
+
+.amount-grid input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.amount-grid span {
+  display: grid;
+  place-items: center;
+  min-height: 78px;
+  color: var(--royal);
+  background: #f7f9fc;
+  border: 1px solid rgba(16, 54, 125, 0.1);
+  border-radius: 20px;
+  font-size: 20px;
+  font-weight: 900;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.amount-grid input:checked + span {
+  color: var(--white);
+  background: var(--royal);
+  border-color: var(--royal);
+  box-shadow: 0 18px 34px rgba(16, 54, 125, 0.2);
+}
+
+.balance-side-card {
+  color: var(--white);
+  background: var(--royal);
+}
+
+.balance-side-card .stat-icon {
+  color: var(--royal);
+  background: var(--white);
+}
+
+.pro-hero-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 26px;
+  align-items: stretch;
+  margin: 0 auto 24px;
+  padding: 34px;
+  background: linear-gradient(135deg, var(--royal), var(--royal-dark));
+  border-radius: 34px;
+  box-shadow: var(--shadow);
+}
+
+.pro-hero-card h1 {
+  max-width: 720px;
+  margin: 18px 0 0;
+  color: var(--white);
+  font-size: clamp(42px, 5vw, 68px);
+  line-height: 1.02;
+}
+
+.pro-hero-card p {
+  max-width: 660px;
+  margin: 16px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.pro-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 14px;
+  color: var(--royal);
+  background: var(--white);
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.pro-hero-card .inline-actions {
+  justify-content: flex-start;
+  margin-top: 26px;
+}
+
+.pro-hero-card .inline-actions form {
+  margin: 0;
+}
+
+.pro-hero-card .btn-soft {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.pro-benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.pro-benefits-grid h2 {
+  margin: 18px 0 0;
+  font-size: 24px;
+}
+
+.pro-benefits-grid p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.pro-lock {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px;
+  color: var(--royal);
+  background: var(--sky-soft);
+  border-radius: 18px;
+}
+
+.pro-lock i {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  background: var(--white);
+  border-radius: 15px;
+}
+
+.pro-lock strong {
+  display: block;
+  color: var(--royal);
+  line-height: 1.35;
+}
+
+.pro-lock a {
+  display: inline-flex;
+  margin-top: 7px;
+  font-weight: 850;
+}
+
 @media (max-width: 1080px) {
   .header-inner,
   .workspace-hero,
@@ -2427,7 +2683,9 @@ textarea {
   .role-grid,
   .workspace-grid,
   .admin-panel-grid,
-  .video-layout {
+  .video-layout,
+  .pro-hero-card,
+  .pro-benefits-grid {
     grid-template-columns: 1fr;
   }
 
@@ -2539,6 +2797,7 @@ textarea {
   .form-grid,
   .service-grid,
   .money-form,
+  .amount-grid,
   .subjects-grid,
   .lesson-row,
   .slot-row,
@@ -2667,8 +2926,11 @@ textarea {
 
   .section-head,
   .review-head,
-  .student-head {
+  .student-head,
+  .student-tutor-head,
+  .student-group-lesson {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .student-hero-copy,
@@ -2691,6 +2953,16 @@ textarea {
 
   .student-tabbar button {
     flex: 1;
+  }
+
+  .student-lesson-actions {
+    justify-content: stretch;
+  }
+
+  .student-lesson-actions .btn,
+  .student-lesson-actions .status-pill,
+  .student-tutor-head .btn {
+    width: 100%;
   }
 
   .moderation-actions,

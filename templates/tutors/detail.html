@@ -10,9 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_profile_redesign.css' %}?v=5">
+    <link rel="stylesheet" href="{% static 'css/tutor_profile_redesign.css' %}?v=6">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
-    <script src="{% static 'js/notifications.js' %}?v=5" defer></script>
+    <script src="{% static 'js/notifications.js' %}?v=6" defer></script>
 </head>
 <body{% if user.is_authenticated %} data-authenticated="1"{% endif %}>
     <header class="site-header">
@@ -68,9 +68,12 @@
             <section class="profile-main">
                 <article class="profile-hero-card" id="info">
                     <div class="profile-photo-wrap">
-                        <img src="{% if tutor.photo %}{{ tutor.photo }}{% else %}https://ui-avatars.com/api/?name={{ tutor.user.get_full_name|default:tutor.user.username|urlencode }}&size=240&background=10367d&color=fff&bold=true{% endif %}"
+                        <img src="{% if tutor.avatar_url %}{{ tutor.avatar_url }}{% else %}https://ui-avatars.com/api/?name={{ tutor.user.get_full_name|default:tutor.user.username|urlencode }}&size=240&background=10367d&color=fff&bold=true{% endif %}"
                              alt="{{ tutor.user.get_full_name|default:tutor.user.username }}"
                              class="profile-photo">
+                        {% if tutor_has_pro %}
+                            <span class="profile-pro-badge" title="Znanium Pro"><i class="fa-solid fa-graduation-cap"></i></span>
+                        {% endif %}
                         <span class="availability {% if tutor_is_online %}is-online{% else %}is-offline{% endif %}">
                             {% if tutor_is_online %}В сети{% else %}Не в сети{% endif %}
                         </span>
@@ -84,7 +87,10 @@
                                 <span class="verified"><i class="fa-solid fa-circle-check"></i> Документы проверены</span>
                             {% endif %}
                         </div>
-                        <h1>{{ tutor.user.get_full_name|default:tutor.user.username }}</h1>
+                        <h1>
+                            {{ tutor.user.get_full_name|default:tutor.user.username }}
+                            {% if tutor_has_pro %}<span class="inline-pro"><i class="fa-solid fa-graduation-cap"></i>Pro</span>{% endif %}
+                        </h1>
                         <div class="hero-facts">
                             <div>
                                 <span>Стаж</span>
@@ -128,6 +134,15 @@
                     <div class="text-card">
                         <p>{{ tutor.bio|default:"Преподаватель пока не добавил описание. Можно перейти к записи и уточнить детали перед первым занятием." }}</p>
                     </div>
+                    {% if tutor.intro_video %}
+                        <div class="video-profile-card">
+                            <video controls preload="metadata" src="{{ tutor.intro_video.url }}"></video>
+                            <div>
+                                <strong>Видео-анкета</strong>
+                                <span>Преподаватель кратко рассказывает о себе и формате занятий.</span>
+                            </div>
+                        </div>
+                    {% endif %}
                 </section>
 
                 <section class="content-section" id="formats">
@@ -246,10 +261,6 @@
                     <div>
                         <strong>{{ tutor.experience_years }} лет</strong>
                         <span>опыта преподавания</span>
-                    </div>
-                    <div>
-                        <strong>{{ tutor.subjects.count }}</strong>
-                        <span>предметов в профиле</span>
                     </div>
                 </div>
             </aside>

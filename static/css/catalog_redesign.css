@@ -520,19 +520,56 @@ input {
   border-radius: 30px;
 }
 
-.format-badge {
+.pro-badge {
   position: absolute;
-  top: 0;
-  right: 0;
-  max-width: 122px;
-  padding: 7px 9px;
+  top: 4px;
+  right: 18px;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
   color: var(--royal);
-  background: var(--sky-soft);
-  border: 1px solid rgba(16, 54, 125, 0.1);
+  background: var(--white);
+  border: 1px solid rgba(16, 54, 125, 0.12);
+  border-radius: 15px;
+  box-shadow: 0 14px 30px rgba(16, 54, 125, 0.14);
+  font-size: 18px;
+}
+
+.availability-badge {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 31px;
+  padding: 0 12px;
+  color: var(--muted);
+  background: var(--white);
+  border: 1px solid rgba(16, 54, 125, 0.12);
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  text-align: center;
+  box-shadow: 0 12px 26px rgba(16, 54, 125, 0.12);
+  font-size: 12px;
+  font-weight: 850;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.availability-badge::before {
+  width: 7px;
+  height: 7px;
+  background: var(--muted);
+  border-radius: 50%;
+  content: "";
+}
+
+.availability-badge.is-online {
+  color: #12715d;
+}
+
+.availability-badge.is-online::before {
+  background: #1f8f6f;
 }
 
 .tutor-title h2 {
@@ -679,17 +716,8 @@ input {
   border-radius: 50%;
 }
 
-.tutor-grid.is-list-view .format-badge {
-  top: auto;
-  right: auto;
+.tutor-grid.is-list-view .availability-badge {
   bottom: -14px;
-  left: 50%;
-  max-width: 138px;
-  transform: translateX(-50%);
-  color: var(--white);
-  background: var(--royal);
-  border-color: transparent;
-  box-shadow: 0 10px 24px rgba(16, 54, 125, 0.18);
 }
 
 .tutor-grid.is-list-view .tutor-title {
@@ -980,12 +1008,6 @@ input {
     gap: 10px;
   }
 
-  .format-badge {
-    position: static;
-    max-width: 100%;
-    margin-top: -2px;
-  }
-
   .tutor-grid.is-list-view .tutor-card {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -1005,10 +1027,6 @@ input {
   .tutor-grid.is-list-view .tutor-avatar {
     width: 124px;
     height: 124px;
-  }
-
-  .tutor-grid.is-list-view .format-badge {
-    position: static;
   }
 
   .tutor-grid.is-list-view .tutor-title h2,

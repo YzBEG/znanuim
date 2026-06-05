@@ -81,6 +81,7 @@ def student_dashboard(request):
         messages.error(request, 'Доступ запрещён')
         return redirect('home')
     
+    from collections import OrderedDict
     from lessons.models import LessonOrder
     from payments.models import Transaction, Wallet
     
@@ -99,12 +100,55 @@ def student_dashboard(request):
         student=request.user,
         status=LessonOrder.Status.COMPLETED
     ).select_related('tutor', 'slot').order_by('-slot__start_at')[:10]
-    
+
+    grouped_orders = LessonOrder.objects.filter(
+        student=request.user,
+        status__in=[
+            LessonOrder.Status.PENDING,
+            LessonOrder.Status.CONFIRMED,
+            LessonOrder.Status.COMPLETED,
+        ],
+    ).select_related(
+        'tutor',
+        'slot',
+        'tutor__tutor_profile',
+        'review',
+    ).prefetch_related('materials').order_by(
+        'tutor__last_name',
+        'tutor__first_name',
+        '-slot__start_at',
+    )[:60]
+
+    lesson_groups_map = OrderedDict()
+    for order in grouped_orders:
+        tutor = order.tutor
+        profile = getattr(tutor, 'tutor_profile', None)
+        order.has_review = hasattr(order, 'review')
+        group = lesson_groups_map.setdefault(tutor.id, {
+            'tutor': tutor,
+            'profile': profile,
+            'photo_url': profile.avatar_url if profile and profile.avatar_url else '',
+            'orders': [],
+            'upcoming_count': 0,
+            'past_count': 0,
+            'materials_count': 0,
+        })
+        group['orders'].append(order)
+        group['materials_count'] += len(getattr(order, '_prefetched_objects_cache', {}).get('materials', []))
+        if order.status == LessonOrder.Status.COMPLETED:
+            group['past_count'] += 1
+        else:
+            group['upcoming_count'] += 1
+    lesson_groups = list(lesson_groups_map.values())
+    student_materials_count = sum(group['materials_count'] for group in lesson_groups)
+
     context = {
         'wallet': wallet,
         'recent_transactions': recent_transactions,
         'upcoming_lessons': upcoming_lessons,
         'past_lessons': past_lessons,
+        'lesson_groups': lesson_groups,
+        'student_materials_count': student_materials_count,
     }
     return render(request, 'users/student_dashboard.html', context)
 
@@ -214,6 +258,8 @@ def tutor_profile_edit(request):
         messages.error(request, 'Доступ запрещён')
         return redirect('home')
     
+    from payments.models import Transaction
+    from payments.services import service_is_active, service_paid_until
     from tutors.models import TutorProfile, Subject
     
     # Получаем или создаём профиль
@@ -221,6 +267,8 @@ def tutor_profile_edit(request):
         user=request.user,
         defaults={'price_per_hour': 1000}
     )
+    pro_active = service_is_active(request.user, Transaction.Type.PRO_SUBSCRIPTION)
+    pro_paid_until = service_paid_until(request.user, Transaction.Type.PRO_SUBSCRIPTION)
     
     if request.method == 'POST':
         request.user.first_name = request.POST.get('first_name', request.user.first_name)
@@ -238,6 +286,16 @@ def tutor_profile_edit(request):
         # Обработка файлов - только если загружены новые
         if 'diploma' in request.FILES:
             profile.diploma = request.FILES['diploma']
+        if 'photo_file' in request.FILES:
+            profile.photo_file = request.FILES['photo_file']
+        if 'intro_video' in request.FILES:
+            if pro_active:
+                profile.intro_video = request.FILES['intro_video']
+            else:
+                messages.warning(
+                    request,
+                    'Загрузка видео-анкеты доступна репетиторам с подпиской Znanium Pro.',
+                )
         
         # Сохраняем профиль
         profile.save()
@@ -254,6 +312,8 @@ def tutor_profile_edit(request):
     context = {
         'profile': profile,
         'subjects': subjects,
+        'pro_active': pro_active,
+        'pro_paid_until': pro_paid_until,
     }
     return render(request, 'users/tutor_profile_edit.html', context)
 

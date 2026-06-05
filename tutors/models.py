@@ -47,6 +47,7 @@ class TutorProfile(models.Model):
 
     diploma = models.FileField(upload_to="tutors/diplomas/", blank=True, null=True)
     intro_video = models.FileField(upload_to="tutors/videos/", blank=True, null=True)
+    photo_file = models.FileField(upload_to="tutors/photos/", blank=True, null=True)
     photo = models.URLField(max_length=500, blank=True, help_text="URL фотографии репетитора")
     identity_verified = models.BooleanField(default=False)
 
@@ -57,6 +58,15 @@ class TutorProfile(models.Model):
 
     def __str__(self):
         return f"Репетитор: {self.user.get_full_name() or self.user.username}"
+
+    @property
+    def avatar_url(self):
+        if self.photo_file:
+            try:
+                return self.photo_file.url
+            except ValueError:
+                pass
+        return self.photo
 
 
 class ProfileView(models.Model):

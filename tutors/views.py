@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.db import models
+from django.db.models import Case, IntegerField, Value, When
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -24,8 +25,23 @@ def design_home_redesign(request):
 
 
 def tutor_catalog(request):
+    from payments.models import Transaction
+
+    pro_since = timezone.now() - timedelta(days=30)
+    active_pro_user_ids = set(Transaction.objects.filter(
+        type=Transaction.Type.PRO_SUBSCRIPTION,
+        created_at__gte=pro_since,
+    ).values_list("user_id", flat=True))
+    pro_lookup_user_ids = active_pro_user_ids or {-1}
+
     tutors = TutorProfile.objects.select_related("user").prefetch_related("subjects").filter(
         verification_status=TutorProfile.VerificationStatus.APPROVED
+    ).annotate(
+        pro_rank=Case(
+            When(user_id__in=pro_lookup_user_ids, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        )
     )
 
     subject_id = request.GET.get("subject")
@@ -56,12 +72,17 @@ def tutor_catalog(request):
 
     tutors = tutors.distinct()
     sort_options = {
-        "rating": ("-rating", "-review_count"),
-        "price_asc": ("price_per_hour", "-rating"),
-        "price_desc": ("-price_per_hour", "-rating"),
-        "experience": ("-experience_years", "-rating"),
+        "rating": ("-pro_rank", "-rating", "-review_count"),
+        "price_asc": ("-pro_rank", "price_per_hour", "-rating"),
+        "price_desc": ("-pro_rank", "-price_per_hour", "-rating"),
+        "experience": ("-pro_rank", "-experience_years", "-rating"),
     }
     tutors = tutors.order_by(*sort_options.get(sort, sort_options["rating"]))
+
+    online_since = timezone.now() - timedelta(minutes=15)
+    for tutor in tutors:
+        tutor.has_pro = tutor.user_id in active_pro_user_ids
+        tutor.is_online = bool(tutor.user.last_login and tutor.user.last_login >= online_since)
 
     return render(
         request,
@@ -122,11 +143,15 @@ def tutor_detail(request, tutor_id):
     reviews = Review.objects.filter(tutor=tutor.user).select_related('student').order_by('-created_at')
     last_login = tutor.user.last_login
     tutor_is_online = bool(last_login and timezone.now() - last_login <= timedelta(minutes=15))
+    from payments.models import Transaction
+    from payments.services import service_is_active
+    tutor_has_pro = service_is_active(tutor.user, Transaction.Type.PRO_SUBSCRIPTION)
     
     return render(request, "tutors/detail.html", {
         "tutor": tutor,
         "reviews": reviews,
         "tutor_is_online": tutor_is_online,
+        "tutor_has_pro": tutor_has_pro,
     })
 
 

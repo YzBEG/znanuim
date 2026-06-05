@@ -9,9 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=16">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=17">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
-    <script src="{% static 'js/notifications.js' %}?v=5" defer></script>
+    <script src="{% static 'js/notifications.js' %}?v=6" defer></script>
 </head>
 <body{% if user.is_authenticated %} data-authenticated="1"{% endif %}>
     <header class="site-header">
@@ -60,10 +60,11 @@
                     </div>
 
                     <div class="photo-upload">
-                        <img src="{% if profile.photo %}{{ profile.photo }}{% else %}https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}" alt="{{ user.get_full_name|default:user.username }}">
+                        <img src="{% if profile.avatar_url %}{{ profile.avatar_url }}{% else %}https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}" alt="{{ user.get_full_name|default:user.username }}">
                         <div>
                             <label>Аватар преподавателя</label>
-                            <span class="field-help">Пока используется автоматически сформированный аватар. Загрузка фото и видео временно отключена.</span>
+                            <input type="file" id="photo_file" name="photo_file" accept=".jpg,.jpeg,.png,.webp">
+                            <span class="field-help">JPG, PNG или WEBP. Фото будет отображаться в каталоге и публичном профиле.</span>
                         </div>
                     </div>
 
@@ -137,7 +138,7 @@
                     <div class="section-head" style="margin-top: 28px;">
                         <div>
                             <h2>Документы</h2>
-                            <p>Сейчас доступна только загрузка диплома или сертификата.</p>
+                            <p>Загрузите документы, фото и видео-анкету, если активна подписка Znanium Pro.</p>
                         </div>
                     </div>
 
@@ -153,6 +154,27 @@
                             <input type="file" id="diploma" name="diploma" accept=".pdf,.jpg,.jpeg,.png">
                             <span class="field-help">PDF, JPG или PNG.</span>
                         </div>
+                        <div class="form-field">
+                            <label for="intro_video">Видео-анкета</label>
+                            {% if pro_active %}
+                                {% if profile.intro_video %}
+                                    <div class="file-current">
+                                        <span><i class="fa-solid fa-video"></i> Видео загружено</span>
+                                        <a href="{{ profile.intro_video.url }}" target="_blank" rel="noopener">Открыть</a>
+                                    </div>
+                                {% endif %}
+                                <input type="file" id="intro_video" name="intro_video" accept="video/mp4,video/webm,video/quicktime">
+                                <span class="field-help">Короткое видео о себе и формате занятий.</span>
+                            {% else %}
+                                <div class="pro-lock">
+                                    <i class="fa-solid fa-graduation-cap"></i>
+                                    <div>
+                                        <strong>Загрузка видео-анкеты доступна репетиторам с подпиской Znanium Pro.</strong>
+                                        <a href="{% url 'buy_pro_subscription' %}">Перейти к подписке</a>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="form-actions">
@@ -165,7 +187,7 @@
             <aside class="side-stack">
                 <article class="workspace-card profile-mini">
                     <div class="profile-mini-top">
-                        <img src="{% if profile.photo %}{{ profile.photo }}{% else %}https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&size=160&background=10367d&color=fff&bold=true{% endif %}" alt="{{ user.get_full_name|default:user.username }}">
+                        <img src="{% if profile.avatar_url %}{{ profile.avatar_url }}{% else %}https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&size=160&background=10367d&color=fff&bold=true{% endif %}" alt="{{ user.get_full_name|default:user.username }}">
                         <div>
                             <h3>{{ user.get_full_name|default:user.username }}</h3>
                             <p>{{ profile.get_lesson_format_display }}{% if profile.city %}, {{ profile.city }}{% endif %}</p>
@@ -175,6 +197,7 @@
                         <a href="{% url 'tutor_dashboard' %}">Кабинет <i class="fa-solid fa-arrow-right"></i></a>
                         <a href="{% url 'manage_slots' %}">Расписание <i class="fa-solid fa-arrow-right"></i></a>
                         {% if profile.id %}<a href="{% url 'tutor_detail' profile.id %}">Публичная страница <i class="fa-solid fa-arrow-right"></i></a>{% endif %}
+                        <a href="{% url 'buy_pro_subscription' %}">Znanium Pro <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
                 </article>
             </aside>

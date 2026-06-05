@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Conversation, Message, Notification, create_notification
@@ -121,6 +121,7 @@ def notifications_list(request):
 
 
 @login_required
+@csrf_exempt
 @require_POST
 def notifications_mark_read(request):
     notification_id = request.POST.get("id")

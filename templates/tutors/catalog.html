@@ -10,9 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/catalog_redesign.css' %}?v=10">
+    <link rel="stylesheet" href="{% static 'css/catalog_redesign.css' %}?v=11">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
-    <script src="{% static 'js/notifications.js' %}?v=5" defer></script>
+    <script src="{% static 'js/notifications.js' %}?v=6" defer></script>
 </head>
 <body{% if user.is_authenticated %} data-authenticated="1"{% endif %}>
     <header class="site-header">
@@ -188,10 +188,15 @@
                             {% for tutor in tutors %}
                                 <article class="tutor-card">
                                     <div class="tutor-card-top">
-                                        <img src="{% if tutor.photo %}{{ tutor.photo }}{% else %}https://ui-avatars.com/api/?name={{ tutor.user.get_full_name|default:tutor.user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}"
+                                        <img src="{% if tutor.avatar_url %}{{ tutor.avatar_url }}{% else %}https://ui-avatars.com/api/?name={{ tutor.user.get_full_name|default:tutor.user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}"
                                              alt="{{ tutor.user.get_full_name|default:tutor.user.username }}"
                                              class="tutor-avatar">
-                                        <span class="format-badge">{{ tutor.get_lesson_format_display }}</span>
+                                        {% if tutor.has_pro %}
+                                            <span class="pro-badge" title="Znanium Pro"><i class="fa-solid fa-graduation-cap"></i></span>
+                                        {% endif %}
+                                        <span class="availability-badge {% if tutor.is_online %}is-online{% else %}is-offline{% endif %}">
+                                            {% if tutor.is_online %}В сети{% else %}Не в сети{% endif %}
+                                        </span>
                                     </div>
 
                                     <div class="tutor-title">
@@ -200,6 +205,7 @@
                                             <span class="rating"><i class="fa-solid fa-star"></i> {{ tutor.rating|floatformat:1 }}</span>
                                             <span>{{ tutor.review_count }} отзывов</span>
                                             <span>{{ tutor.experience_years }} лет</span>
+                                            <span>{{ tutor.get_lesson_format_display }}</span>
                                             {% if tutor.city %}<span>{{ tutor.city }}</span>{% endif %}
                                         </div>
                                     </div>

@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/book_lesson_redesign.css' %}?v=3">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
-    <script src="{% static 'js/notifications.js' %}?v=5" defer></script>
+    <script src="{% static 'js/notifications.js' %}?v=6" defer></script>
 </head>
 <body{% if user.is_authenticated %} data-authenticated="1"{% endif %}>
     <header class="site-header">
@@ -66,7 +66,7 @@
         <section class="shell booking-layout">
             <div class="booking-main">
                 <article class="booking-card tutor-strip">
-                    <img src="{% if tutor.photo %}{{ tutor.photo }}{% else %}https://ui-avatars.com/api/?name={{ tutor.user.get_full_name|default:tutor.user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}"
+                    <img src="{% if tutor.avatar_url %}{{ tutor.avatar_url }}{% else %}https://ui-avatars.com/api/?name={{ tutor.user.get_full_name|default:tutor.user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}"
                          alt="{{ tutor.user.get_full_name|default:tutor.user.username }}">
                     <div>
                         <span class="muted">Вы записываетесь к преподавателю</span>

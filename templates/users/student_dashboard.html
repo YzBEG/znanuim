@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -9,22 +9,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=16">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=17">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
-    <script src="{% static 'js/notifications.js' %}?v=5" defer></script>
+    <script src="{% static 'js/notifications.js' %}?v=6" defer></script>
 </head>
 <body{% if user.is_authenticated %} data-authenticated="1"{% endif %}>
     <header class="site-header">
         <div class="shell header-inner">
             <a class="brand" href="{% url 'home' %}">Znanium</a>
             <div class="header-actions">
-                <a class="btn btn-ghost" href="{% url 'tutor_catalog' %}">Каталог</a>
+                <a class="btn btn-ghost" href="{% url 'chat_list' %}"><i class="fa-regular fa-comments"></i>Сообщения</a>
                 <a class="btn btn-primary" href="{% url 'logout' %}">Выход</a>
             </div>
         </div>
     </header>
 
-    <main class="workspace-page">
+    <main class="workspace-page student-dashboard-page">
         <div class="shell">
             {% if messages %}
                 <div class="messages">
@@ -44,34 +44,17 @@
                     </div>
                 </div>
 
-                <article class="student-next-card">
-                    {% if upcoming_lessons %}
-                        {% with next_lesson=upcoming_lessons.0 %}
-                            <h2>{{ next_lesson.slot.start_at|date:"d.m, H:i" }}</h2>
-                            <p>{{ next_lesson.tutor.get_full_name|default:next_lesson.tutor.username }}</p>
-                            <div class="student-next-actions">
-                                <span class="status-pill {% if next_lesson.status == 'confirmed' %}status-confirmed{% else %}status-pending{% endif %}">{{ next_lesson.get_status_display }}</span>
-                                {% if next_lesson.status == 'confirmed' %}
-                                    <a href="{% url 'video_lesson' next_lesson.id %}" class="btn btn-primary"><i class="fa-solid fa-video"></i>Войти в урок</a>
-                                {% endif %}
-                                <a href="{% url 'start_chat' next_lesson.tutor.id %}" class="btn btn-soft">Написать</a>
-                            </div>
-                        {% endwith %}
-                    {% else %}
-                        <h2>Подберите преподавателя</h2>
-                        <p>Выберите предмет, удобное время и отправьте заявку на урок.</p>
-                        <a href="{% url 'tutor_catalog' %}" class="btn btn-primary">Открыть каталог</a>
-                    {% endif %}
+                <article class="student-balance-card">
+                    <div>
+                        <span>Баланс</span>
+                        <strong>{{ wallet.balance|floatformat:0 }} ₽</strong>
+                        <p>Демо-счёт используется для записи и оплаты проведённых уроков.</p>
+                    </div>
+                    <a href="{% url 'top_up_balance' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i>Пополнить баланс</a>
                 </article>
             </section>
 
             <section class="stats-grid student-stats">
-                <article class="stat-card">
-                    <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
-                    <span>Баланс</span>
-                    <strong>{{ wallet.balance|floatformat:0 }} ₽</strong>
-                    <small>Демо-баланс для записи на уроки</small>
-                </article>
                 <article class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-calendar-check"></i></div>
                     <span>Ближайшие</span>
@@ -84,151 +67,87 @@
                     <strong>{{ past_lessons|length }}</strong>
                     <small>Проведённые занятия</small>
                 </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-paperclip"></i></div>
+                    <span>Материалы</span>
+                    <strong>{{ student_materials_count }}</strong>
+                    <small>Файлы открываются из карточек уроков</small>
+                </article>
             </section>
-
-            <details class="workspace-disclosure finance-disclosure">
-                <summary>
-                    <span><i class="fa-solid fa-wallet"></i> Баланс и операции</span>
-                    <strong>{{ wallet.balance|floatformat:0 }} ₽</strong>
-                </summary>
-                <section class="workspace-grid finance-layout">
-                    <article class="workspace-card finance-card">
-                        <div class="section-head">
-                            <div>
-                                <h2>Пополнить баланс</h2>
-                                <p>Демо-пополнение без реальной оплаты. Сумма сразу появится на балансе ученика.</p>
-                            </div>
-                            <span class="status-pill status-confirmed">демо</span>
-                        </div>
-                        <form class="money-form" method="post" action="{% url 'top_up_balance' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                            <label>
-                                <span>Сумма, ₽</span>
-                                <input type="number" name="amount" min="100" step="100" value="2000" required>
-                            </label>
-                            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i>Пополнить</button>
-                        </form>
-                    </article>
-
-                    <article class="workspace-card finance-card">
-                        <div class="section-head">
-                            <div>
-                                <h2>Последние операции</h2>
-                                <p>Пополнения и списания за проведённые уроки.</p>
-                            </div>
-                        </div>
-                        {% if recent_transactions %}
-                            <div class="transaction-list">
-                                {% for transaction in recent_transactions %}
-                                    <div class="transaction-row">
-                                        <div>
-                                            <strong>{{ transaction.get_type_display }}</strong>
-                                            <span>{{ transaction.created_at|date:"d.m.Y H:i" }}</span>
-                                        </div>
-                                        <b>{{ transaction.amount|floatformat:0 }} ₽</b>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="empty-panel compact-empty">
-                                <i class="fa-regular fa-credit-card"></i>
-                                <h3>Операций пока нет</h3>
-                                <p>Пополните баланс или завершите первый урок.</p>
-                            </div>
-                        {% endif %}
-                    </article>
-                </section>
-            </details>
 
             <article class="workspace-card student-lessons-card">
                 <div class="section-head">
                     <div>
                         <h2>Мои уроки</h2>
-                        <p>Переключайтесь между текущими заявками и завершёнными занятиями.</p>
+                        <p>Занятия сгруппированы по преподавателям, чтобы быстрее найти дату, материалы или отзыв.</p>
                     </div>
                     <div class="student-tabbar" role="tablist" aria-label="Уроки ученика">
-                        <button class="active" type="button" data-student-tab="upcoming" role="tab" aria-selected="true">Ближайшие</button>
+                        <button class="active" type="button" data-student-tab="all" role="tab" aria-selected="true">Все</button>
+                        <button type="button" data-student-tab="upcoming" role="tab" aria-selected="false">Ближайшие</button>
                         <button type="button" data-student-tab="past" role="tab" aria-selected="false">История</button>
                     </div>
                 </div>
 
-                <div class="student-tab-panel active" data-student-panel="upcoming">
-                    {% if upcoming_lessons %}
-                        <div class="list-stack">
-                            {% for order in upcoming_lessons %}
-                                <div class="lesson-row">
+                {% if lesson_groups %}
+                    <div class="student-tutor-groups">
+                        {% for group in lesson_groups %}
+                            <section class="student-tutor-card">
+                                <div class="student-tutor-head">
                                     <div class="lesson-person">
-                                        <img class="lesson-photo" src="{% if order.tutor.tutor_profile.photo %}{{ order.tutor.tutor_profile.photo }}{% else %}https://ui-avatars.com/api/?name={{ order.tutor.get_full_name|default:order.tutor.username|urlencode }}&size=160&background=10367d&color=fff&bold=true{% endif %}" alt="{{ order.tutor.get_full_name|default:order.tutor.username }}">
+                                        <img class="lesson-photo" src="{% if group.photo_url %}{{ group.photo_url }}{% else %}https://ui-avatars.com/api/?name={{ group.tutor.get_full_name|default:group.tutor.username|urlencode }}&size=160&background=10367d&color=fff&bold=true{% endif %}" alt="{{ group.tutor.get_full_name|default:group.tutor.username }}">
                                         <div>
-                                            <h3 class="item-title">{{ order.tutor.get_full_name|default:order.tutor.username }}</h3>
+                                            <h3 class="item-title">{{ group.tutor.get_full_name|default:group.tutor.username }}</h3>
                                             <div class="item-line">
-                                                <span><i class="fa-regular fa-clock"></i>{{ order.slot.start_at|date:"d.m.Y H:i" }} - {{ order.slot.end_at|date:"H:i" }}</span>
-                                                <span><i class="fa-solid fa-ruble-sign"></i>{{ order.price|floatformat:0 }} ₽</span>
+                                                <span><i class="fa-solid fa-calendar-days"></i>{{ group.upcoming_count }} актуальных</span>
+                                                <span><i class="fa-solid fa-check"></i>{{ group.past_count }} проведено</span>
+                                                <span><i class="fa-solid fa-paperclip"></i>{{ group.materials_count }} материалов</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="card-actions">
-                                        {% if order.status == 'confirmed' %}
-                                            <span class="status-pill status-confirmed">{{ order.get_status_display }}</span>
-                                            <a href="{% url 'video_lesson' order.id %}" class="btn btn-primary"><i class="fa-solid fa-video"></i>Видеоурок</a>
-                                            <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
-                                            <a href="{% url 'start_chat' order.tutor.id %}" class="btn btn-soft">Написать</a>
-                                        {% else %}
-                                            <span class="status-pill status-pending">{{ order.get_status_display }}</span>
-                                            <a href="{% url 'cancel_order' order.id %}" class="btn btn-danger" onclick="return confirm('Отменить заявку?')">Отменить</a>
-                                        {% endif %}
-                                    </div>
+                                    <a href="{% url 'start_chat' group.tutor.id %}" class="btn btn-soft"><i class="fa-regular fa-message"></i>Написать</a>
                                 </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="empty-panel">
-                            <i class="fa-regular fa-calendar"></i>
-                            <h3>Ближайших уроков пока нет</h3>
-                            <p>Откройте каталог, выберите преподавателя и забронируйте удобный слот.</p>
-                            <div class="empty-actions">
-                                <a href="{% url 'tutor_catalog' %}" class="btn btn-primary">Перейти в каталог</a>
-                            </div>
-                        </div>
-                    {% endif %}
-                </div>
 
-                <div class="student-tab-panel" data-student-panel="past" hidden>
-                    {% if past_lessons %}
-                        <div class="list-stack">
-                            {% for order in past_lessons %}
-                                <div class="lesson-row">
-                                    <div class="lesson-person">
-                                        <img class="lesson-photo" src="{% if order.tutor.tutor_profile.photo %}{{ order.tutor.tutor_profile.photo }}{% else %}https://ui-avatars.com/api/?name={{ order.tutor.get_full_name|default:order.tutor.username|urlencode }}&size=160&background=10367d&color=fff&bold=true{% endif %}" alt="{{ order.tutor.get_full_name|default:order.tutor.username }}">
-                                        <div>
-                                            <h3 class="item-title">{{ order.tutor.get_full_name|default:order.tutor.username }}</h3>
-                                            <div class="item-line">
-                                                <span><i class="fa-regular fa-calendar"></i>{{ order.slot.start_at|date:"d.m.Y H:i" }}</span>
-                                                <span><i class="fa-solid fa-ruble-sign"></i>{{ order.price|floatformat:0 }} ₽</span>
+                                <div class="student-group-lessons">
+                                    {% for order in group.orders %}
+                                        <div class="student-group-lesson" data-lesson-status="{% if order.status == 'completed' %}past{% else %}upcoming{% endif %}">
+                                            <div>
+                                                <strong>{{ order.slot.start_at|date:"d.m.Y H:i" }} - {{ order.slot.end_at|date:"H:i" }}</strong>
+                                                <span>{{ order.price|floatformat:0 }} ₽</span>
+                                            </div>
+                                            <div class="student-lesson-actions">
+                                                {% if order.status == 'confirmed' %}
+                                                    <span class="status-pill status-confirmed">{{ order.get_status_display }}</span>
+                                                    <a href="{% url 'video_lesson' order.id %}" class="btn btn-primary"><i class="fa-solid fa-video"></i>Урок</a>
+                                                    <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
+                                                {% elif order.status == 'pending' %}
+                                                    <span class="status-pill status-pending">{{ order.get_status_display }}</span>
+                                                    <a href="{% url 'cancel_order' order.id %}" class="btn btn-danger" onclick="return confirm('Отменить заявку?')">Отменить</a>
+                                                {% else %}
+                                                    <span class="status-pill status-completed">Проведён</span>
+                                                    <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
+                                                    {% if not order.has_review %}
+                                                        <a href="{% url 'leave_review' order.id %}" class="btn btn-primary">Отзыв</a>
+                                                    {% else %}
+                                                        <span class="status-pill status-confirmed"><i class="fa-solid fa-check"></i>Отзыв оставлен</span>
+                                                    {% endif %}
+                                                {% endif %}
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="card-actions">
-                                        <span class="status-pill status-completed">Проведён</span>
-                                        <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
-                                        {% if not order.review %}
-                                            <a href="{% url 'leave_review' order.id %}" class="btn btn-primary">Отзыв</a>
-                                        {% else %}
-                                            <span class="status-pill status-confirmed"><i class="fa-solid fa-check"></i>Отзыв оставлен</span>
-                                        {% endif %}
-                                    </div>
+                                    {% endfor %}
                                 </div>
-                            {% endfor %}
+                            </section>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-panel">
+                        <i class="fa-regular fa-calendar"></i>
+                        <h3>Уроков пока нет</h3>
+                        <p>Откройте каталог, выберите преподавателя и забронируйте удобный слот.</p>
+                        <div class="empty-actions">
+                            <a href="{% url 'tutor_catalog' %}" class="btn btn-primary">Перейти в каталог</a>
                         </div>
-                    {% else %}
-                        <div class="empty-panel">
-                            <i class="fa-regular fa-folder-open"></i>
-                            <h3>История уроков пуста</h3>
-                            <p>После завершения занятий здесь появятся материалы и отзывы.</p>
-                        </div>
-                    {% endif %}
-                </div>
+                    </div>
+                {% endif %}
             </article>
         </div>
     </main>
@@ -244,10 +163,8 @@
                     tab.setAttribute('aria-selected', String(isActive));
                 });
 
-                document.querySelectorAll('[data-student-panel]').forEach((panel) => {
-                    const isActive = panel.dataset.studentPanel === target;
-                    panel.classList.toggle('active', isActive);
-                    panel.hidden = !isActive;
+                document.querySelectorAll('[data-lesson-status]').forEach((row) => {
+                    row.hidden = target !== 'all' && row.dataset.lessonStatus !== target;
                 });
             });
         });

@@ -120,6 +120,7 @@ function initNotificationCenter() {
         return fetch('/chat/notifications/read/', {
             method: 'POST',
             headers: { 'X-CSRFToken': getCookie('csrftoken') || '' },
+            credentials: 'same-origin',
             body: formData,
         }).then((response) => response.ok ? response.json() : null);
     }
@@ -149,6 +150,7 @@ function initNotificationCenter() {
             if (data) {
                 notifications = [];
                 render(data.unread_count || 0);
+                dropdown.hidden = true;
             }
         });
     });

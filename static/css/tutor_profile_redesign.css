@@ -250,6 +250,37 @@ button {
   background: var(--muted);
 }
 
+.profile-pro-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  color: var(--royal);
+  background: var(--white);
+  border: 1px solid rgba(16, 54, 125, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 16px 34px rgba(16, 54, 125, 0.18);
+  font-size: 20px;
+}
+
+.inline-pro {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  margin-left: 10px;
+  padding: 0 12px;
+  color: var(--royal);
+  background: var(--sky-soft);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 900;
+  vertical-align: middle;
+}
+
 .hero-content {
   min-width: 0;
 }
@@ -407,6 +438,41 @@ button {
 .reply p {
   margin: 0;
   line-height: 1.7;
+}
+
+.video-profile-card {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+}
+
+.video-profile-card video {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: var(--ink);
+  border-radius: 18px;
+}
+
+.video-profile-card strong,
+.video-profile-card span {
+  display: block;
+}
+
+.video-profile-card strong {
+  font-size: 20px;
+}
+
+.video-profile-card span {
+  margin-top: 7px;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .lesson-option {
@@ -720,6 +786,7 @@ button {
   .subject-row,
   .lesson-option,
   .review-head,
+  .video-profile-card,
   .contact-card {
     grid-template-columns: 1fr;
   }

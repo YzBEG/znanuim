@@ -1,0 +1,74 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Znanium Pro — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=17">
+    <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
+    <script src="{% static 'js/notifications.js' %}?v=6" defer></script>
+</head>
+<body{% if user.is_authenticated %} data-authenticated="1"{% endif %}>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                <a class="btn btn-ghost" href="{% url 'tutor_dashboard' %}">Кабинет</a>
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выход</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell pro-hero-card">
+            <div>
+                <div class="pro-mark"><i class="fa-solid fa-graduation-cap"></i>Znanium Pro</div>
+                <h1>Больше видимости для анкеты</h1>
+                <p>Подписка поднимает профиль выше в каталоге, добавляет заметный знак Pro и открывает загрузку видео-анкеты.</p>
+                <div class="inline-actions">
+                    <form method="post" action="{% url 'buy_pro_subscription' %}">
+                        {% csrf_token %}
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                            Купить за {{ pro_fee|floatformat:0 }} ₽
+                        </button>
+                    </form>
+                    <a class="btn btn-soft" href="{% url 'top_up_balance' %}">Пополнить баланс</a>
+                </div>
+            </div>
+            <article class="balance-side-card">
+                <span>Баланс</span>
+                <strong>{{ wallet.balance|floatformat:0 }} ₽</strong>
+                {% if pro_active %}
+                    <p>Подписка активна{% if pro_paid_until %} до {{ pro_paid_until|date:"d.m.Y" }}{% endif %}.</p>
+                {% else %}
+                    <p>После покупки Pro действует 30 дней.</p>
+                {% endif %}
+            </article>
+        </section>
+
+        <section class="shell pro-benefits-grid">
+            <article class="workspace-card">
+                <div class="stat-icon"><i class="fa-solid fa-arrow-up-wide-short"></i></div>
+                <h2>Выше в каталоге</h2>
+                <p>Pro-анкеты получают приоритет при сортировке, а затем уже учитываются рейтинг, цена и стаж.</p>
+            </article>
+            <article class="workspace-card">
+                <div class="stat-icon"><i class="fa-solid fa-video"></i></div>
+                <h2>Видео-анкета</h2>
+                <p>Можно загрузить короткое видео о себе, чтобы ученики быстрее понимали стиль преподавателя.</p>
+            </article>
+            <article class="workspace-card">
+                <div class="stat-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                <h2>Знак Pro</h2>
+                <p>В каталоге и профиле появляется значок университетской шапочки рядом с преподавателем.</p>
+            </article>
+        </section>
+    </main>
+</body>
+</html>
