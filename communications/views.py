@@ -129,12 +129,14 @@ def notifications_mark_read(request):
     if notification_id:
         queryset = queryset.filter(id=notification_id)
     queryset.update(is_read=True)
+    notifications = Notification.objects.filter(recipient=request.user, is_read=False)[:8]
     return JsonResponse({
         "ok": True,
         "unread_count": Notification.objects.filter(
             recipient=request.user,
             is_read=False,
         ).count(),
+        "notifications": [notification.as_dict() for notification in notifications],
     })
 
 

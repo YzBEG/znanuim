@@ -171,7 +171,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         from .models import Notification
 
         user = self.scope["user"]
-        latest = Notification.objects.filter(recipient=user)[:8]
+        latest = Notification.objects.filter(recipient=user, is_read=False)[:8]
         return {
             "unread_count": Notification.objects.filter(recipient=user, is_read=False).count(),
             "notifications": [notification.as_dict() for notification in latest],

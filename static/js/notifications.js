@@ -146,11 +146,13 @@ function initNotificationCenter() {
     });
 
     readAllButton.addEventListener('click', () => {
+        notifications = [];
+        render(0);
+        dropdown.hidden = true;
         markRead().then((data) => {
             if (data) {
-                notifications = [];
+                notifications = data.notifications || [];
                 render(data.unread_count || 0);
-                dropdown.hidden = true;
             }
         });
     });
@@ -164,10 +166,21 @@ function initNotificationCenter() {
     list.addEventListener('click', (event) => {
         const item = event.target.closest('.notification-item');
         if (item) {
+            event.preventDefault();
+            const targetUrl = item.getAttribute('href');
+            notifications = notifications.filter((notification) => String(notification.id) !== String(item.dataset.id));
+            render(Math.max(notifications.length, 0));
             markRead(item.dataset.id).then((data) => {
                 if (data) {
-                    notifications = notifications.filter((notification) => String(notification.id) !== String(item.dataset.id));
+                    notifications = data.notifications || notifications;
                     render(data.unread_count || 0);
+                }
+                if (targetUrl && targetUrl !== '#') {
+                    window.location.href = targetUrl;
+                }
+            }).catch(() => {
+                if (targetUrl && targetUrl !== '#') {
+                    window.location.href = targetUrl;
                 }
             });
         }
