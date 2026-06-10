@@ -6,6 +6,6 @@ python -m pip install -r requirements.txt
 python manage.py collectstatic --no-input
 python manage.py migrate
 
-if [[ "$DJANGO_SEED_DEMO" == "True" || "$DJANGO_SEED_DEMO" == "true" || "$DJANGO_SEED_DEMO" == "1" ]]; then
-  python manage.py seed_demo --password "${DJANGO_DEMO_PASSWORD:-Znanium2026!}"
+if [[ "$DJANGO_SEED_INITIAL_DATA" == "True" || "$DJANGO_SEED_INITIAL_DATA" == "true" || "$DJANGO_SEED_INITIAL_DATA" == "1" ]]; then
+  python manage.py seed_initial --password "${DJANGO_INITIAL_PASSWORD:-Znanium2026!}"
 fi

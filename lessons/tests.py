@@ -10,6 +10,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from payments.models import Transaction
 from tutors.models import TutorProfile
 from users.models import User
 
@@ -36,6 +37,11 @@ class LessonApiTests(APITestCase):
             experience_years=3,
             price_per_hour=Decimal('1200.00'),
             verification_status=TutorProfile.VerificationStatus.APPROVED,
+        )
+        Transaction.objects.create(
+            user=self.tutor_user,
+            amount=Decimal('200.00'),
+            type=Transaction.Type.LISTING_FEE,
         )
         self.slot = AvailabilitySlot.objects.create(
             tutor=self.tutor_profile,

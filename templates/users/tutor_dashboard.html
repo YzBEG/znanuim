@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=17">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=18">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -71,13 +71,23 @@
                     </div>
                 </div>
             {% else %}
-                <div class="alert-card">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <div>
-                        <h3>Профиль опубликован</h3>
-                        <p>Ученики видят вашу анкету в каталоге. Поддерживайте актуальное расписание, чтобы получать заявки.</p>
+                {% if listing_active or pro_active %}
+                    <div class="alert-card">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div>
+                            <h3>Профиль опубликован</h3>
+                            <p>Анкета одобрена и оплачена. Ученики видят её в каталоге, если есть подходящие фильтры.</p>
+                        </div>
                     </div>
-                </div>
+                {% else %}
+                    <div class="alert-card">
+                        <i class="fa-solid fa-wallet"></i>
+                        <div>
+                            <h3>Профиль одобрен, но скрыт из каталога</h3>
+                            <p>Оплатите размещение анкеты за {{ listing_fee|floatformat:0 }} ₽ на 30 дней или подключите Znanium Pro. До оплаты ученики не увидят профиль.</p>
+                        </div>
+                    </div>
+                {% endif %}
             {% endif %}
 
             <section class="stats-grid">
@@ -117,7 +127,7 @@
                         <div class="section-head">
                             <div>
                                 <h2>Платные услуги</h2>
-                                <p>Демо-списание с баланса репетитора. Средства поступают директору платформы.</p>
+                                <p>Оплата услуг списывается с баланса репетитора. Средства поступают администратору-владельцу платформы.</p>
                             </div>
                         </div>
                         <div class="service-grid">
@@ -128,7 +138,7 @@
                                     {% if listing_active %}
                                         <small>Оплачено до {{ listing_paid_until|date:"d.m.Y" }}</small>
                                     {% else %}
-                                        <small>Нужно для демонстрации платного размещения</small>
+                                        <small>Необходимо для публикации анкеты в каталоге</small>
                                     {% endif %}
                                 </div>
                                 <form method="post" action="{% url 'pay_listing_fee' %}">
@@ -155,6 +165,7 @@
                         </div>
                         <div class="compact-money-form">
                             <a class="btn btn-soft" href="{% url 'top_up_balance' %}"><i class="fa-solid fa-plus"></i>Пополнить баланс</a>
+                            <a class="btn btn-soft" href="{% url 'withdraw_funds' %}"><i class="fa-solid fa-arrow-up-from-bracket"></i>Вывести средства</a>
                         </div>
                     </article>
 
@@ -162,7 +173,7 @@
                         <div class="section-head">
                             <div>
                                 <h2>Операции</h2>
-                                <p>Выплаты за уроки, оплата услуг и демо-пополнения.</p>
+                                <p>Выплаты за уроки, оплата услуг и пополнения баланса.</p>
                             </div>
                         </div>
                         {% if recent_transactions %}
@@ -334,5 +345,3 @@
     </main>
 </body>
 </html>
-
-

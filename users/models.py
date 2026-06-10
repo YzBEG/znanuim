@@ -13,6 +13,8 @@ class User(AbstractUser):
     phone = models.CharField(max_length=20, blank=True)
     email_verified = models.BooleanField(default=False)
     sms_verified = models.BooleanField(default=False)
+    personal_data_consent = models.BooleanField(default=False)
+    personal_data_consent_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.get_full_name() or self.username} ({self.get_role_display()})"
@@ -20,7 +22,11 @@ class User(AbstractUser):
 
 class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="student_profile")
-    class_level = models.CharField(max_length=30, blank=True, help_text="Например: 9 класс")
+    class_level = models.CharField(
+        max_length=40,
+        blank=True,
+        help_text="Например: 9 класс, студент, взрослый",
+    )
     learning_goal = models.TextField(blank=True)
 
     def __str__(self):

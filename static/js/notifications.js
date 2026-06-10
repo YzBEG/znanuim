@@ -1,13 +1,10 @@
 function bootNotifications() {
-    const messages = document.querySelectorAll('.message');
+    document.querySelectorAll('.message').forEach((message, index) => {
+        const hideDelay = 5000 + index * 500;
 
-    messages.forEach(function(message, index) {
-        const hideDelay = 5000 + (index * 500);
-
-        setTimeout(function() {
+        setTimeout(() => {
             message.classList.add('hiding');
-
-            setTimeout(function() {
+            setTimeout(() => {
                 const messagesContainer = message.closest('.messages');
                 message.remove();
                 if (messagesContainer && messagesContainer.children.length === 0) {
@@ -17,11 +14,9 @@ function bootNotifications() {
         }, hideDelay);
 
         message.style.cursor = 'pointer';
-        message.addEventListener('click', function() {
+        message.addEventListener('click', () => {
             message.classList.add('hiding');
-            setTimeout(function() {
-                message.remove();
-            }, 300);
+            setTimeout(() => message.remove(), 300);
         });
     });
 
@@ -68,13 +63,14 @@ function initNotificationCenter() {
     const list = center.querySelector('.notification-list');
     const readAllButton = center.querySelector('.notification-read-all');
     let notifications = [];
+    let unreadCount = 0;
     let socket = null;
 
-    function render(unreadCount) {
-        const count = Number(unreadCount) || 0;
-        badge.hidden = count <= 0;
-        badge.textContent = count;
-        readAllButton.hidden = count <= 0;
+    function render(count = unreadCount) {
+        unreadCount = Number(count) || 0;
+        badge.hidden = unreadCount <= 0;
+        badge.textContent = unreadCount;
+        readAllButton.hidden = unreadCount <= 0;
 
         if (!notifications.length) {
             list.innerHTML = '<div class="notification-empty">Пока уведомлений нет</div>';
@@ -143,14 +139,16 @@ function initNotificationCenter() {
             center.remove();
         });
 
-    button.addEventListener('click', () => {
+    button.addEventListener('click', (event) => {
+        event.stopPropagation();
         dropdown.hidden = !dropdown.hidden;
     });
 
-    readAllButton.addEventListener('click', () => {
+    readAllButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         notifications = [];
         render(0);
-        dropdown.hidden = true;
         markRead().then((data) => {
             if (data) {
                 notifications = data.notifications || [];
@@ -167,25 +165,25 @@ function initNotificationCenter() {
 
     list.addEventListener('click', (event) => {
         const item = event.target.closest('.notification-item');
-        if (item) {
-            event.preventDefault();
-            const targetUrl = item.getAttribute('href');
-            notifications = notifications.filter((notification) => String(notification.id) !== String(item.dataset.id));
-            render(Math.max(notifications.length, 0));
-            markRead(item.dataset.id).then((data) => {
+        if (!item) return;
+
+        event.preventDefault();
+        const targetUrl = item.getAttribute('href');
+        notifications = notifications.filter((notification) => String(notification.id) !== String(item.dataset.id));
+        render(Math.max(unreadCount - 1, 0));
+
+        markRead(item.dataset.id)
+            .then((data) => {
                 if (data) {
                     notifications = data.notifications || notifications;
                     render(data.unread_count || 0);
                 }
-                if (targetUrl && targetUrl !== '#') {
-                    window.location.href = targetUrl;
-                }
-            }).catch(() => {
+            })
+            .finally(() => {
                 if (targetUrl && targetUrl !== '#') {
                     window.location.href = targetUrl;
                 }
             });
-        }
     });
 
     function connectSocket() {

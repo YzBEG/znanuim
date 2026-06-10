@@ -5,12 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Каталог репетиторов — Znanium</title>
-    <meta name="description" content="Каталог проверенных онлайн-репетиторов Znanium с фильтрами по предмету, цене, формату и опыту.">
+    <meta name="description" content="Каталог проверенных онлайн-репетиторов Znanium с фильтрами по предмету, цене и опыту.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/catalog_redesign.css' %}?v=11">
+    <link rel="stylesheet" href="{% static 'css/catalog_redesign.css' %}?v=12">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -51,7 +51,7 @@
             <div class="shell catalog-hero-grid">
                 <div>
                     <h1>Найдите репетитора под свою цель</h1>
-                    <p>Фильтруйте анкеты по предмету, цене, формату и стажу. Карточки показывают самое важное перед переходом к профилю.</p>
+                    <p>Фильтруйте анкеты по предмету, цене и стажу. Карточки показывают самое важное перед переходом к профилю.</p>
                 </div>
                 <div class="catalog-summary">
                     <strong>{{ tutors.count }}</strong>
@@ -95,30 +95,6 @@
                                         <button type="button" data-value="{{ subject.id }}">{{ subject.name }}</button>
                                     {% endfor %}
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="filter-group">
-                            <label>Формат</label>
-                            <input type="hidden" name="format" value="{{ filters.format }}">
-                            <div class="soft-select" data-soft-select>
-                                <button type="button" aria-haspopup="listbox" aria-expanded="false">
-                                    {% if filters.format == 'online' %}Онлайн{% elif filters.format == 'offline' %}Очный{% elif filters.format == 'both' %}Очно и онлайн{% else %}Любой{% endif %}
-                                </button>
-                                <div class="soft-select-menu" role="listbox">
-                                    <button type="button" data-value="">Любой</button>
-                                    <button type="button" data-value="online">Онлайн</button>
-                                    <button type="button" data-value="offline">Очный</button>
-                                    <button type="button" data-value="both">Очно и онлайн</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="filter-group">
-                            <label for="city">Город</label>
-                            <div class="field-control">
-                                <i class="fa-solid fa-location-dot"></i>
-                                <input type="text" id="city" name="city" placeholder="Москва" value="{{ filters.city }}">
                             </div>
                         </div>
 
@@ -205,8 +181,7 @@
                                             <span class="rating"><i class="fa-solid fa-star"></i> {{ tutor.rating|floatformat:1 }}</span>
                                             <span>{{ tutor.review_count }} отзывов</span>
                                             <span>{{ tutor.experience_years }} лет</span>
-                                            <span>{{ tutor.get_lesson_format_display }}</span>
-                                            {% if tutor.city %}<span>{{ tutor.city }}</span>{% endif %}
+                                            <span>Онлайн</span>
                                         </div>
                                     </div>
 

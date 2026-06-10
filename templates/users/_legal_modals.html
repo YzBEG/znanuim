@@ -1,0 +1,49 @@
+<div class="legal-modal" id="personalDataModal" aria-hidden="true">
+    <div class="legal-modal-backdrop" data-legal-close></div>
+    <div class="legal-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="personalDataTitle">
+        <button class="legal-modal-close" type="button" data-legal-close aria-label="Закрыть"><i class="fa-solid fa-xmark"></i></button>
+        <h2 id="personalDataTitle">Согласие на обработку персональных данных</h2>
+        <p>Пользователь разрешает Znanium обрабатывать данные, указанные при регистрации и дальнейшем использовании сервиса: имя, фамилию, контакты, роль, данные анкеты, заявки, сообщения, материалы уроков и финансовые операции внутри платформы.</p>
+        <p>Данные используются для создания аккаунта, подбора репетитора, бронирования занятий, уведомлений, работы личного кабинета и связи между участниками образовательного процесса.</p>
+        <button class="btn btn-primary" type="button" data-legal-close>Понятно</button>
+    </div>
+</div>
+
+<div class="legal-modal" id="privacyPolicyModal" aria-hidden="true">
+    <div class="legal-modal-backdrop" data-legal-close></div>
+    <div class="legal-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="privacyPolicyTitle">
+        <button class="legal-modal-close" type="button" data-legal-close aria-label="Закрыть"><i class="fa-solid fa-xmark"></i></button>
+        <h2 id="privacyPolicyTitle">Политика конфиденциальности</h2>
+        <p>Znanium использует персональные данные только для работы платформы: регистрации, авторизации, отображения каталога, записи на урок, переписки, хранения материалов, обработки заявок и расчёта баланса.</p>
+        <p>Доступ к данным ограничен ролями пользователя и администратора. Информация не публикуется без необходимости и используется только в рамках функций сервиса.</p>
+        <button class="btn btn-primary" type="button" data-legal-close>Понятно</button>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('[data-legal-open]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const modal = document.getElementById(button.dataset.legalOpen);
+            if (!modal) return;
+            modal.classList.add('is-visible');
+            modal.setAttribute('aria-hidden', 'false');
+        });
+    });
+
+    document.querySelectorAll('[data-legal-close]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const modal = button.closest('.legal-modal');
+            if (!modal) return;
+            modal.classList.remove('is-visible');
+            modal.setAttribute('aria-hidden', 'true');
+        });
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        document.querySelectorAll('.legal-modal.is-visible').forEach((modal) => {
+            modal.classList.remove('is-visible');
+            modal.setAttribute('aria-hidden', 'true');
+        });
+    });
+</script>

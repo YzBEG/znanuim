@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=16">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=18">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -51,8 +51,7 @@
                         <div class="info-row"><strong>Телефон</strong><span>{{ tutor.user.phone|default:"Не указан" }}</span></div>
                         <div class="info-row"><strong>Стаж</strong><span>{{ tutor.experience_years }} лет</span></div>
                         <div class="info-row"><strong>Цена</strong><span>{{ tutor.price_per_hour|floatformat:0 }} ₽/час</span></div>
-                        <div class="info-row"><strong>Формат</strong><span>{{ tutor.get_lesson_format_display }}</span></div>
-                        <div class="info-row"><strong>Город</strong><span>{{ tutor.city|default:"Не указан" }}</span></div>
+                        <div class="info-row"><strong>Формат</strong><span>Онлайн</span></div>
                         <div class="info-row"><strong>Статус</strong><span>{{ tutor.get_verification_status_display }}</span></div>
                     </div>
                 </article>
@@ -116,13 +115,20 @@
             <aside class="workspace-card admin-actions-card">
                 <div class="stat-icon"><i class="fa-solid fa-shield-halved"></i></div>
                 <h2>Решение</h2>
-                <p class="item-muted">Одобрение сразу откроет публичный профиль в каталоге.</p>
-                <a href="{% url 'approve_tutor' tutor.id %}" class="btn btn-primary">
-                    <i class="fa-solid fa-check"></i> Одобрить
-                </a>
-                <a href="{% url 'reject_tutor' tutor.id %}" class="btn btn-danger">
-                    <i class="fa-solid fa-times"></i> Отклонить
-                </a>
+                {% if tutor.verification_status == "pending" %}
+                    <p class="item-muted">После одобрения профиль будет доступен к публикации после оплаты размещения или подписки Znanium Pro.</p>
+                    <a href="{% url 'approve_tutor' tutor.id %}" class="btn btn-primary">
+                        <i class="fa-solid fa-check"></i> Одобрить
+                    </a>
+                    <a href="{% url 'reject_tutor' tutor.id %}" class="btn btn-danger">
+                        <i class="fa-solid fa-times"></i> Отклонить
+                    </a>
+                {% else %}
+                    <p class="item-muted">Анкета уже обработана. Текущий статус: {{ tutor.get_verification_status_display }}.</p>
+                    <a href="{% url 'moderation_dashboard' %}" class="btn btn-primary">
+                        <i class="fa-solid fa-arrow-left"></i> К списку заявок
+                    </a>
+                {% endif %}
             </aside>
         </section>
     </main>

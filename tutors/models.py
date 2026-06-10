@@ -4,8 +4,17 @@ from django.db import models
 
 class Subject(models.Model):
     name = models.CharField(max_length=120)
-    icon = models.CharField(max_length=50, blank=True, help_text="Font Awesome иконка (например: fa-calculator)")
-    color = models.CharField(max_length=7, blank=True, default='#7c3aed', help_text="Цвет в формате HEX")
+    icon = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Font Awesome иконка, например fa-calculator",
+    )
+    color = models.CharField(
+        max_length=7,
+        blank=True,
+        default="#7c3aed",
+        help_text="Цвет в формате HEX",
+    )
     parent = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
@@ -26,7 +35,7 @@ class TutorProfile(models.Model):
     class VerificationStatus(models.TextChoices):
         PENDING = "pending", "На модерации"
         APPROVED = "approved", "Одобрен"
-        REJECTED = "rejected", "Отклонен"
+        REJECTED = "rejected", "Отклонён"
 
     class LessonFormat(models.TextChoices):
         ONLINE = "online", "Онлайн"
@@ -42,7 +51,9 @@ class TutorProfile(models.Model):
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0)
     review_count = models.PositiveIntegerField(default=0)
     verification_status = models.CharField(
-        max_length=20, choices=VerificationStatus.choices, default=VerificationStatus.PENDING
+        max_length=20,
+        choices=VerificationStatus.choices,
+        default=VerificationStatus.PENDING,
     )
 
     diploma = models.FileField(upload_to="tutors/diplomas/", blank=True, null=True)
@@ -70,14 +81,13 @@ class TutorProfile(models.Model):
 
 
 class ProfileView(models.Model):
-    """Статистика просмотров профиля репетитора"""
     tutor = models.ForeignKey(TutorProfile, on_delete=models.CASCADE, related_name="profile_views")
     viewer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     viewed_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         ordering = ["-viewed_at"]
-    
+
     def __str__(self):
         return f"Просмотр {self.tutor} в {self.viewed_at}"

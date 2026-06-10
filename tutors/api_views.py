@@ -2,7 +2,6 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from django.db.models import Q
 from .models import TutorProfile, Subject
 from .serializers import TutorProfileSerializer, TutorProfileListSerializer, SubjectSerializer
 
@@ -21,7 +20,7 @@ class TutorProfileViewSet(viewsets.ReadOnlyModelViewSet):
     ).select_related('user').prefetch_related('subjects')
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['user__first_name', 'user__last_name', 'bio', 'subjects__name', 'city']
+    search_fields = ['user__first_name', 'user__last_name', 'bio', 'subjects__name']
     ordering_fields = ['price_per_hour', 'rating', 'experience_years', 'created_at']
     ordering = ['-rating']
     
@@ -32,21 +31,26 @@ class TutorProfileViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         queryset = super().get_queryset()
+        from payments.models import Transaction
+        possible_user_ids = Transaction.objects.filter(
+            type__in=[Transaction.Type.LISTING_FEE, Transaction.Type.PRO_SUBSCRIPTION],
+            amount__gt=0,
+        ).values_list("user_id", flat=True).distinct()
+        paid_user_ids = [
+            user_id
+            for user_id in possible_user_ids
+            if service_is_active_id(user_id, Transaction.Type.LISTING_FEE)
+            or service_is_active_id(user_id, Transaction.Type.PRO_SUBSCRIPTION)
+        ]
+        queryset = queryset.filter(
+            user_id__in=paid_user_ids,
+            lesson_format__in=[TutorProfile.LessonFormat.ONLINE, TutorProfile.LessonFormat.BOTH],
+        )
         
         # Фильтр по предмету
         subject = self.request.query_params.get('subject')
         if subject:
             queryset = queryset.filter(subjects__name__icontains=subject)
-        
-        # Фильтр по формату
-        lesson_format = self.request.query_params.get('format')
-        if lesson_format:
-            queryset = queryset.filter(lesson_format=lesson_format)
-        
-        # Фильтр по городу
-        city = self.request.query_params.get('city')
-        if city:
-            queryset = queryset.filter(city__icontains=city)
         
         # Фильтр по цене
         min_price = self.request.query_params.get('min_price')
@@ -85,3 +89,12 @@ class TutorProfileViewSet(viewsets.ReadOnlyModelViewSet):
         
         serializer = AvailabilitySlotSerializer(slots, many=True)
         return Response(serializer.data)
+
+
+def service_is_active_id(user_id, transaction_type):
+    from django.contrib.auth import get_user_model
+    from payments.services import service_is_active
+
+    User = get_user_model()
+    user = User.objects.filter(id=user_id).first()
+    return bool(user and service_is_active(user, transaction_type))

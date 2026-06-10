@@ -5,8 +5,8 @@ from django.db.models import Count, Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from communications.models import Conversation, LeadRequest
 from lessons.models import LessonOrder
-from payments.models import Transaction
-from payments.services import get_director_user, get_wallet
+from payments.models import Transaction, WithdrawalRequest
+from payments.services import get_platform_owner_user, get_wallet
 from reviews.models import Review
 from tutors.models import TutorProfile
 from users.models import User
@@ -24,10 +24,10 @@ def admin_dashboard(request):
     lead_status_counts = dict(
         LeadRequest.objects.values_list("status").annotate(count=Count("id"))
     )
-    director = get_director_user()
-    director_wallet = get_wallet(director)
-    platform_income = Transaction.objects.filter(user=director).aggregate(total=Sum("amount"))["total"] or 0
-    recent_platform_transactions = Transaction.objects.filter(user=director).order_by("-created_at")[:5]
+    platform_owner = get_platform_owner_user()
+    platform_owner_wallet = get_wallet(platform_owner)
+    platform_income = Transaction.objects.filter(user=platform_owner).aggregate(total=Sum("amount"))["total"] or 0
+    recent_platform_transactions = Transaction.objects.filter(user=platform_owner).order_by("-created_at")[:5]
 
     context = {
         "users_total": User.objects.count(),
@@ -47,8 +47,9 @@ def admin_dashboard(request):
         "leads_closed": lead_status_counts.get("closed", 0),
         "conversations_total": Conversation.objects.count(),
         "reviews_total": Review.objects.count(),
-        "director": director,
-        "director_wallet": director_wallet,
+        "withdrawals_pending": WithdrawalRequest.objects.filter(status=WithdrawalRequest.Status.PENDING).count(),
+        "platform_owner": platform_owner,
+        "platform_owner_wallet": platform_owner_wallet,
         "platform_income": platform_income,
         "recent_platform_transactions": recent_platform_transactions,
         "recent_tutors": TutorProfile.objects.select_related("user").prefetch_related("subjects").order_by("-id")[:5],
@@ -85,6 +86,9 @@ def moderation_dashboard(request):
 def approve_tutor(request, tutor_id):
     """Одобрить репетитора"""
     tutor = get_object_or_404(TutorProfile, id=tutor_id)
+    if tutor.verification_status != TutorProfile.VerificationStatus.PENDING:
+        messages.info(request, "Анкета уже обработана.")
+        return redirect("tutor_detail_admin", tutor_id=tutor.id)
     tutor.verification_status = TutorProfile.VerificationStatus.APPROVED
     tutor.save()
     messages.success(request, f'Репетитор {tutor.user.get_full_name()} одобрен')
@@ -95,6 +99,10 @@ def approve_tutor(request, tutor_id):
 def reject_tutor(request, tutor_id):
     """Отклонить репетитора"""
     tutor = get_object_or_404(TutorProfile, id=tutor_id)
+
+    if tutor.verification_status != TutorProfile.VerificationStatus.PENDING:
+        messages.info(request, "Анкета уже обработана.")
+        return redirect("tutor_detail_admin", tutor_id=tutor.id)
     
     if request.method == 'POST':
         reason = request.POST.get('reason', '')

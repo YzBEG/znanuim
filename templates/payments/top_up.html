@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=17">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=20">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -18,7 +18,9 @@
         <div class="shell header-inner">
             <a class="brand" href="{% url 'home' %}">Znanium</a>
             <div class="header-actions">
-                {% if user.role == 'student' %}
+                {% if user.is_staff or user.role == 'admin' or user.role == 'moderator' %}
+                    <a class="btn btn-ghost" href="{% url 'admin_dashboard' %}">Панель</a>
+                {% elif user.role == 'student' %}
                     <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Кабинет</a>
                 {% else %}
                     <a class="btn btn-ghost" href="{% url 'tutor_dashboard' %}">Кабинет</a>
@@ -32,7 +34,7 @@
         <section class="shell workspace-hero">
             <div>
                 <h1>Пополнение баланса</h1>
-                <p>Демо-касса для дипломного проекта: сумма сразу зачисляется на внутренний счёт без реальной оплаты.</p>
+                <p>Выберите сумму и удобный способ оплаты. После подтверждения средства зачисляются на внутренний баланс платформы.</p>
             </div>
         </section>
 
@@ -50,7 +52,7 @@
                     <div class="section-head">
                         <div>
                             <h2>Выберите сумму</h2>
-                            <p>В реальном проекте здесь подключается платёжный провайдер. Сейчас это безопасная заглушка для проверки сценариев оплаты.</p>
+                            <p>Баланс используется для записи на занятия, оплаты проведённых уроков и работы с платными услугами платформы.</p>
                         </div>
                     </div>
 
@@ -61,6 +63,21 @@
                             <label><input type="radio" name="amount" value="2000"><span>2 000 ₽</span></label>
                             <label><input type="radio" name="amount" value="5000"><span>5 000 ₽</span></label>
                             <label><input type="radio" name="amount" value="10000"><span>10 000 ₽</span></label>
+                        </div>
+                        <label class="custom-amount-field">
+                            <span>Своя сумма</span>
+                            <input type="number" name="custom_amount" min="100" step="50" placeholder="Например, 3500">
+                        </label>
+                        <div class="payment-method-grid">
+                            {% for value, label, description in payment_methods %}
+                                <label>
+                                    <input type="radio" name="payment_method" value="{{ value }}" {% if forloop.first %}checked{% endif %}>
+                                    <span>
+                                        <strong>{{ label }}</strong>
+                                        <small>{{ description }}</small>
+                                    </span>
+                                </label>
+                            {% endfor %}
                         </div>
                         <button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i>Пополнить баланс</button>
                     </form>
@@ -83,9 +100,9 @@
                         </div>
                     </div>
                     {% if recent_transactions %}
-                        <div class="transaction-list">
+                        <div class="transaction-list transaction-preview-list">
                             {% for transaction in recent_transactions %}
-                                <div class="transaction-row">
+                                <div class="transaction-row {% if forloop.counter > 3 %}is-extra-transaction{% endif %}">
                                     <div>
                                         <strong>{{ transaction.get_type_display }}</strong>
                                         <span>{{ transaction.created_at|date:"d.m.Y H:i" }}</span>
@@ -94,6 +111,11 @@
                                 </div>
                             {% endfor %}
                         </div>
+                        {% if recent_transactions|length > 3 %}
+                            <button class="btn btn-soft transaction-more-btn" type="button" data-transactions-toggle aria-expanded="false">
+                                Все транзакции
+                            </button>
+                        {% endif %}
                     {% else %}
                         <div class="empty-panel compact-empty">
                             <i class="fa-regular fa-credit-card"></i>
@@ -104,5 +126,35 @@
             </aside>
         </section>
     </main>
+    <script>
+        const customAmount = document.querySelector('input[name="custom_amount"]');
+        const amountRadios = document.querySelectorAll('input[name="amount"]');
+        if (customAmount) {
+            customAmount.addEventListener('input', () => {
+                if (customAmount.value.trim()) {
+                    amountRadios.forEach((radio) => { radio.checked = false; });
+                } else if (![...amountRadios].some((radio) => radio.checked) && amountRadios[0]) {
+                    amountRadios[0].checked = true;
+                }
+            });
+            amountRadios.forEach((radio) => {
+                radio.addEventListener('change', () => {
+                    if (radio.checked) customAmount.value = '';
+                });
+            });
+        }
+
+        const transactionsToggle = document.querySelector('[data-transactions-toggle]');
+        if (transactionsToggle) {
+            transactionsToggle.addEventListener('click', () => {
+                document.querySelectorAll('.is-extra-transaction').forEach((row) => {
+                    row.classList.toggle('is-visible');
+                });
+                const expanded = transactionsToggle.getAttribute('aria-expanded') === 'true';
+                transactionsToggle.setAttribute('aria-expanded', String(!expanded));
+                transactionsToggle.textContent = expanded ? 'Все транзакции' : 'Скрыть историю';
+            });
+        }
+    </script>
 </body>
 </html>

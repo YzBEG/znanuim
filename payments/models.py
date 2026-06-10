@@ -9,15 +9,15 @@ class Wallet(models.Model):
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     def __str__(self):
-        return f"Кошелек {self.user}"
+        return f"Кошелёк {self.user}"
 
 
 class Transaction(models.Model):
     class Type(models.TextChoices):
         TOP_UP = "top_up", "Пополнение баланса"
         LESSON_PAYMENT = "lesson_payment", "Оплата урока"
-        HOLD = "hold", "Холдирование"
-        RELEASE = "release", "Разморозка"
+        HOLD = "hold", "Резервирование средств"
+        RELEASE = "release", "Зачисление репетитору"
         PAYOUT = "payout", "Выплата репетитору"
         REFUND = "refund", "Возврат ученику"
         COMMISSION = "commission", "Комиссия платформы"

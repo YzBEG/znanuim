@@ -12,8 +12,8 @@ class SubjectAdmin(admin.ModelAdmin):
 @admin.register(TutorProfile)
 class TutorProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "price_per_hour", "rating", "verification_status", "lesson_format")
-    list_filter = ("verification_status", "lesson_format", "city")
-    search_fields = ("user__username", "user__first_name", "user__last_name", "city")
+    list_filter = ("verification_status", "lesson_format")
+    search_fields = ("user__username", "user__first_name", "user__last_name")
     filter_horizontal = ("subjects",)
     exclude = ("intro_video",)
 

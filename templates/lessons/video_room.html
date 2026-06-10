@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=16">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=18">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -42,14 +42,25 @@
                 </p>
             </div>
             <div class="inline-actions">
-                <a class="btn btn-primary" href="{{ meeting_url }}" target="_blank" rel="noopener">
-                    <i class="fa-solid fa-video"></i>Открыть Телемост
-                </a>
-                <button class="btn btn-soft" type="button" id="copyMeetingBtn">
-                    <i class="fa-regular fa-copy"></i>Скопировать приглашение
-                </button>
+                {% if is_tutor %}
+                    <a class="btn btn-primary" href="{{ telemost_create_url }}" target="_blank" rel="noopener">
+                        <i class="fa-solid fa-video"></i>Открыть Телемост
+                    </a>
+                {% elif lesson_meeting_url %}
+                    <a class="btn btn-primary" href="{{ lesson_meeting_url }}" target="_blank" rel="noopener">
+                        <i class="fa-solid fa-video"></i>Перейти к уроку
+                    </a>
+                {% endif %}
             </div>
         </section>
+
+        {% if messages %}
+            <div class="shell messages">
+                {% for message in messages %}
+                    <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <section class="shell video-layout">
             <article class="video-stage external-meeting-stage">
@@ -58,31 +69,59 @@
                         <i class="fa-solid fa-video"></i>
                     </div>
                     <h2>Видеосвязь проходит через Яндекс Телемост</h2>
-                    <p>
-                        Для стабильной связи урок открывается во внешнем сервисе. Нажмите
-                        «Открыть Телемост», создайте встречу и отправьте ссылку второму участнику.
-                    </p>
+                    {% if is_tutor %}
+                        <p>Откройте Телемост, создайте встречу, вставьте ссылку в поле справа и отправьте её ученику.</p>
+                    {% elif lesson_meeting_url %}
+                        <p>Репетитор отправил ссылку на занятие. Откройте её, чтобы перейти к видеоуроку.</p>
+                    {% else %}
+                        <p>Репетитор готовит ссылку на встречу. Когда она появится, вы увидите кнопку перехода.</p>
+                    {% endif %}
                     <div class="external-meeting-actions">
-                        <a class="btn btn-primary" href="{{ meeting_url }}" target="_blank" rel="noopener">
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i>Открыть Телемост
-                        </a>
-                        <button class="btn btn-soft" type="button" id="copyMeetingBtnStage">
-                            <i class="fa-regular fa-copy"></i>Скопировать приглашение
-                        </button>
+                        {% if is_tutor %}
+                            <a class="btn btn-primary" href="{{ telemost_create_url }}" target="_blank" rel="noopener">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>Создать встречу
+                            </a>
+                        {% elif lesson_meeting_url %}
+                            <a class="btn btn-primary" href="{{ lesson_meeting_url }}" target="_blank" rel="noopener">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>Открыть урок
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
             </article>
 
             <aside class="video-side workspace-card">
                 <h2>Управление</h2>
-                <p id="callStatus">Откройте Яндекс Телемост, создайте встречу и передайте ссылку второму участнику.</p>
+                {% if is_tutor %}
+                    <p>Создайте встречу и отправьте ученику настоящую ссылку на урок.</p>
+                {% elif lesson_meeting_url %}
+                    <p>Ссылка на урок готова. Нажмите кнопку ниже, чтобы подключиться.</p>
+                {% else %}
+                    <p>Ссылка на урок ещё не отправлена репетитором.</p>
+                {% endif %}
                 <div class="video-controls">
-                    <a class="btn btn-primary" href="{{ meeting_url }}" target="_blank" rel="noopener">
-                        <i class="fa-solid fa-video"></i>Открыть Телемост
-                    </a>
-                    <button class="btn btn-soft" type="button" id="copyMeetingBtnSide">
-                        <i class="fa-regular fa-copy"></i>Скопировать приглашение
-                    </button>
+                    {% if is_tutor %}
+                        <a class="btn btn-primary" href="{{ telemost_create_url }}" target="_blank" rel="noopener">
+                            <i class="fa-solid fa-video"></i>Открыть Телемост
+                        </a>
+                        <form method="post" class="meeting-link-form">
+                            {% csrf_token %}
+                            <label for="meeting_url">Ссылка на встречу</label>
+                            <input id="meeting_url" name="meeting_url" type="url" value="{{ lesson_meeting_url }}" placeholder="https://telemost.yandex.ru/..." required>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fa-solid fa-paper-plane"></i>Отправить ученику
+                            </button>
+                        </form>
+                    {% elif lesson_meeting_url %}
+                        <a class="btn btn-primary" href="{{ lesson_meeting_url }}" target="_blank" rel="noopener">
+                            <i class="fa-solid fa-video"></i>Перейти к уроку
+                        </a>
+                    {% else %}
+                        <div class="meeting-wait-card">
+                            <i class="fa-regular fa-clock"></i>
+                            <span>Ожидаем ссылку от репетитора.</span>
+                        </div>
+                    {% endif %}
                     <a class="btn btn-soft" href="{% url 'lesson_materials' order.id %}">
                         <i class="fa-solid fa-folder-open"></i>Материалы урока
                     </a>
@@ -95,28 +134,5 @@
             </aside>
         </section>
     </main>
-
-    {{ meeting_url|json_script:"meeting-url" }}
-    <script>
-        const meetingUrl = JSON.parse(document.getElementById('meeting-url').textContent);
-        const callStatus = document.getElementById('callStatus');
-        const lessonText = '{{ order.slot.start_at|date:"d.m.Y H:i"|escapejs }}';
-        const peerText = '{% if is_tutor %}{{ order.student.get_full_name|default:order.student.username|escapejs }}{% else %}{{ order.tutor.get_full_name|default:order.tutor.username|escapejs }}{% endif %}';
-        const copyButtons = [
-            document.getElementById('copyMeetingBtn'),
-            document.getElementById('copyMeetingBtnStage'),
-            document.getElementById('copyMeetingBtnSide'),
-        ].filter(Boolean);
-
-        async function copyMeetingLink() {
-            const invite = `Видеоурок Znanium: ${lessonText}\nУчастник: ${peerText}\nОткройте Яндекс Телемост и создайте встречу: ${meetingUrl}`;
-            await navigator.clipboard.writeText(invite);
-            callStatus.textContent = 'Приглашение для видеовстречи скопировано.';
-        }
-
-        copyButtons.forEach((button) => {
-            button.addEventListener('click', copyMeetingLink);
-        });
-    </script>
 </body>
 </html>

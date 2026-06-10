@@ -311,6 +311,10 @@ input {
   z-index: 20;
 }
 
+.soft-select.is-open {
+  z-index: 220;
+}
+
 .soft-select > button {
   display: flex;
   align-items: center;
@@ -352,7 +356,7 @@ input {
 
 .soft-select-menu {
   position: absolute;
-  z-index: 90;
+  z-index: 240;
   top: calc(100% + 10px);
   left: 0;
   width: 100%;

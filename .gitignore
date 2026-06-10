@@ -25,6 +25,7 @@ db.sqlite3
 media/
 outputs/
 practice_report_work/
+_diploma_work/
 design_review_screenshots/
 figma_review/
 cgi-bin/

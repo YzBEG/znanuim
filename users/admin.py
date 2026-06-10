@@ -5,8 +5,8 @@ from .models import StudentProfile, User
 
 @admin.register(User)
 class CustomUserAdmin(BaseUserAdmin):
-    list_display = ("username", "email", "role", "is_staff", "is_active")
-    list_filter = ("role", "is_staff", "is_active")
+    list_display = ("username", "email", "role", "personal_data_consent", "is_staff", "is_active")
+    list_filter = ("role", "personal_data_consent", "is_staff", "is_active")
     search_fields = ("username", "email", "first_name", "last_name")
     ordering = ("username",)
     
@@ -18,6 +18,7 @@ class CustomUserAdmin(BaseUserAdmin):
             "fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions"),
         }),
         ("Верификация", {"fields": ("email_verified", "sms_verified")}),
+        ("Персональные данные", {"fields": ("personal_data_consent", "personal_data_consent_at")}),
         ("Важные даты", {"fields": ("last_login", "date_joined")}),
     )
     

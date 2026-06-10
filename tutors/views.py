@@ -27,15 +27,28 @@ def design_home_redesign(request):
 def tutor_catalog(request):
     from payments.models import Transaction
 
-    pro_since = timezone.now() - timedelta(days=30)
-    active_pro_user_ids = set(Transaction.objects.filter(
-        type=Transaction.Type.PRO_SUBSCRIPTION,
-        created_at__gte=pro_since,
+    active_service_user_ids = set(Transaction.objects.filter(
+        type__in=[Transaction.Type.LISTING_FEE, Transaction.Type.PRO_SUBSCRIPTION],
+        amount__gt=0,
     ).values_list("user_id", flat=True))
+    active_pro_user_ids = {
+        user_id
+        for user_id in active_service_user_ids
+        if service_is_active_id(user_id, Transaction.Type.PRO_SUBSCRIPTION)
+    }
+    active_listing_user_ids = {
+        user_id
+        for user_id in active_service_user_ids
+        if service_is_active_id(user_id, Transaction.Type.LISTING_FEE)
+    }
+    published_user_ids = active_listing_user_ids | active_pro_user_ids
     pro_lookup_user_ids = active_pro_user_ids or {-1}
+    published_lookup_user_ids = published_user_ids or {-1}
 
     tutors = TutorProfile.objects.select_related("user").prefetch_related("subjects").filter(
-        verification_status=TutorProfile.VerificationStatus.APPROVED
+        verification_status=TutorProfile.VerificationStatus.APPROVED,
+        user_id__in=published_lookup_user_ids,
+        lesson_format__in=[TutorProfile.LessonFormat.ONLINE, TutorProfile.LessonFormat.BOTH],
     ).annotate(
         pro_rank=Case(
             When(user_id__in=pro_lookup_user_ids, then=Value(1)),
@@ -45,8 +58,6 @@ def tutor_catalog(request):
     )
 
     subject_id = request.GET.get("subject")
-    city = request.GET.get("city")
-    lesson_format = request.GET.get("format")
     min_price = request.GET.get("min_price")
     max_price = request.GET.get("max_price")
     q = request.GET.get("q")
@@ -54,10 +65,6 @@ def tutor_catalog(request):
 
     if subject_id:
         tutors = tutors.filter(subjects__id=subject_id)
-    if city:
-        tutors = tutors.filter(city__icontains=city)
-    if lesson_format:
-        tutors = tutors.filter(Q(lesson_format=lesson_format) | Q(lesson_format=TutorProfile.LessonFormat.BOTH))
     if min_price:
         tutors = tutors.filter(price_per_hour__gte=min_price)
     if max_price:
@@ -83,6 +90,7 @@ def tutor_catalog(request):
     for tutor in tutors:
         tutor.has_pro = tutor.user_id in active_pro_user_ids
         tutor.is_online = bool(tutor.user.last_login and tutor.user.last_login >= online_since)
+        tutor.publication_paid = tutor.user_id in published_user_ids
 
     return render(
         request,
@@ -92,8 +100,6 @@ def tutor_catalog(request):
             "subjects": Subject.objects.all(),
             "filters": {
                 "subject": subject_id or "",
-                "city": city or "",
-                "format": lesson_format or "",
                 "min_price": min_price or "",
                 "max_price": max_price or "",
                 "q": q or "",
@@ -103,22 +109,39 @@ def tutor_catalog(request):
     )
 
 
+def service_is_active_id(user_id, transaction_type):
+    from django.contrib.auth import get_user_model
+    from payments.services import service_is_active
+
+    User = get_user_model()
+    user = User.objects.filter(id=user_id).first()
+    return bool(user and service_is_active(user, transaction_type))
+
+
 def tutor_detail(request, tutor_id):
     tutor = get_object_or_404(
         TutorProfile.objects.select_related("user").prefetch_related("subjects"),
         id=tutor_id,
     )
 
-    if tutor.verification_status != TutorProfile.VerificationStatus.APPROVED:
-        is_owner = request.user.is_authenticated and request.user == tutor.user
+    from payments.models import Transaction
+    from payments.services import service_is_active, tutor_publication_is_active
+
+    is_owner = request.user.is_authenticated and request.user == tutor.user
+    is_staff_viewer = request.user.is_authenticated and (request.user.is_staff or request.user.role in ["admin", "moderator"])
+    publication_active = tutor_publication_is_active(tutor.user)
+
+    if tutor.verification_status != TutorProfile.VerificationStatus.APPROVED or not publication_active:
         return render(
             request,
             "tutors/profile_unavailable.html",
             {
                 "tutor": tutor,
                 "is_owner": is_owner,
+                "is_staff_viewer": is_staff_viewer,
+                "publication_active": publication_active,
             },
-            status=200 if is_owner else 404,
+            status=200 if is_owner or is_staff_viewer else 404,
         )
     
     # Учёт просмотра профиля
@@ -143,8 +166,6 @@ def tutor_detail(request, tutor_id):
     reviews = Review.objects.filter(tutor=tutor.user).select_related('student').order_by('-created_at')
     last_login = tutor.user.last_login
     tutor_is_online = bool(last_login and timezone.now() - last_login <= timedelta(minutes=15))
-    from payments.models import Transaction
-    from payments.services import service_is_active
     tutor_has_pro = service_is_active(tutor.user, Transaction.Type.PRO_SUBSCRIPTION)
     
     return render(request, "tutors/detail.html", {

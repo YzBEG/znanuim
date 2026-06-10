@@ -379,6 +379,30 @@ input {
   color: var(--warning);
 }
 
+.timezone-note {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin: -6px 0 22px;
+  padding: 14px;
+  color: var(--royal);
+  background: var(--sky-soft);
+  border: 1px solid rgba(116, 180, 217, 0.35);
+  border-radius: 18px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.timezone-note i {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  background: var(--white);
+  border-radius: 14px;
+}
+
 .booking-form {
   display: grid;
   gap: 22px;

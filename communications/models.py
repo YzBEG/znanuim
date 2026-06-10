@@ -7,34 +7,33 @@ from django.utils import timezone
 
 
 class LeadRequest(models.Model):
-    """Заявка с главной страницы"""
     GOAL_CHOICES = [
-        ('grades', 'Подтянуть успеваемость'),
-        ('exam', 'Подготовка к ЕГЭ/ОГЭ'),
-        ('self', 'Для себя'),
+        ("grades", "Подтянуть успеваемость"),
+        ("exam", "Подготовка к ЕГЭ/ОГЭ"),
+        ("self", "Для себя"),
     ]
-    
+
     STATUS_CHOICES = [
-        ('new', 'Новая'),
-        ('in_progress', 'В обработке'),
-        ('contacted', 'Связались'),
-        ('closed', 'Закрыта'),
+        ("new", "Новая"),
+        ("in_progress", "В обработке"),
+        ("contacted", "Связались"),
+        ("closed", "Закрыта"),
     ]
-    
-    name = models.CharField(max_length=100, verbose_name='Имя')
-    phone = models.CharField(max_length=20, verbose_name='Телефон')
-    subject = models.CharField(max_length=100, verbose_name='Предмет')
-    goal = models.CharField(max_length=20, choices=GOAL_CHOICES, verbose_name='Цель')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new', verbose_name='Статус')
-    notes = models.TextField(blank=True, verbose_name='Заметки менеджера')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
-    
+
+    name = models.CharField(max_length=100, verbose_name="Имя")
+    phone = models.CharField(max_length=20, verbose_name="Телефон")
+    subject = models.CharField(max_length=100, verbose_name="Предмет")
+    goal = models.CharField(max_length=20, choices=GOAL_CHOICES, verbose_name="Цель")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="new", verbose_name="Статус")
+    notes = models.TextField(blank=True, verbose_name="Заметки менеджера")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+
     class Meta:
-        ordering = ['-created_at']
-        verbose_name = 'Заявка'
-        verbose_name_plural = 'Заявки'
-    
+        ordering = ["-created_at"]
+        verbose_name = "Заявка"
+        verbose_name_plural = "Заявки"
+
     def __str__(self):
         return f"Заявка #{self.id} - {self.name} ({self.subject})"
 

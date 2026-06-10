@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=16">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=18">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -47,17 +47,31 @@
                 {% if tutor.verification_status == 'rejected' %}
                     <h1>Профиль нужно исправить</h1>
                     <p>Анкета пока не опубликована. Обновите данные профиля и отправьте его на повторную проверку.</p>
+                {% elif not publication_active %}
+                    <h1>Анкета одобрена, но не опубликована</h1>
+                    <p>Модерация пройдена. Чтобы ученики увидели профиль в каталоге, оплатите размещение анкеты или подключите Znanium Pro.</p>
                 {% else %}
                     <h1>Профиль на модерации</h1>
                     <p>Публичная страница появится после проверки. Пока ученики не видят эту анкету в каталоге.</p>
                 {% endif %}
                 <div class="inline-actions">
-                    <a class="btn btn-primary" href="{% url 'tutor_profile_edit' %}">Изменить профиль</a>
+                    {% if not publication_active and tutor.verification_status == 'approved' %}
+                        <a class="btn btn-primary" href="{% url 'tutor_dashboard' %}">Оплатить размещение</a>
+                    {% else %}
+                        <a class="btn btn-primary" href="{% url 'tutor_profile_edit' %}">Изменить профиль</a>
+                    {% endif %}
                     <a class="btn btn-soft" href="{% url 'tutor_dashboard' %}">Вернуться в кабинет</a>
+                </div>
+            {% elif is_staff_viewer %}
+                <h1>Анкета не опубликована</h1>
+                <p>Статус модерации: {{ tutor.get_verification_status_display }}. Оплата размещения: {% if publication_active %}активна{% else %}не активна{% endif %}.</p>
+                <div class="inline-actions">
+                    <a class="btn btn-primary" href="{% url 'tutor_detail_admin' tutor.id %}">Открыть в модерации</a>
+                    <a class="btn btn-soft" href="{% url 'admin_dashboard' %}">Админ-панель</a>
                 </div>
             {% else %}
                 <h1>Профиль недоступен</h1>
-                <p>Эта анкета ещё не прошла модерацию или временно снята с публикации.</p>
+                <p>Эта анкета ещё не прошла модерацию, не оплачена для публикации или временно снята с каталога.</p>
                 <div class="inline-actions">
                     <a class="btn btn-primary" href="{% url 'tutor_catalog' %}">Вернуться в каталог</a>
                     <a class="btn btn-soft" href="{% url 'home' %}">На главную</a>
@@ -67,5 +81,3 @@
     </main>
 </body>
 </html>
-
-

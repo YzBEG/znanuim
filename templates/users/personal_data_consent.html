@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Согласие на обработку персональных данных — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=18">
+</head>
+<body>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                <a class="btn btn-ghost" href="{% url 'register_choice' %}">Регистрация</a>
+                <a class="btn btn-primary" href="{% url 'login' %}">Войти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell legal-card">
+            <span class="student-chip">согласие</span>
+            <h1>Согласие на обработку персональных данных</h1>
+            <p>Регистрируясь на платформе Znanium, пользователь подтверждает согласие на обработку персональных данных для работы сервиса.</p>
+
+            <div class="legal-grid">
+                <article>
+                    <h2>Состав данных</h2>
+                    <p>Пользователь разрешает обработку регистрационных данных, контактной информации, данных профиля, заявок, сообщений, материалов уроков и истории операций.</p>
+                </article>
+                <article>
+                    <h2>Цель обработки</h2>
+                    <p>Данные используются для создания аккаунта, работы личного кабинета, подбора репетиторов, бронирования занятий, уведомлений и предоставления функций платформы.</p>
+                </article>
+                <article>
+                    <h2>Срок действия</h2>
+                    <p>Согласие действует с момента регистрации до удаления аккаунта или прекращения использования проекта.</p>
+                </article>
+                <article>
+                    <h2>Отзыв согласия</h2>
+                    <p>Пользователь может обратиться к администратору платформы для уточнения состава обрабатываемых данных или ограничения доступа к аккаунту.</p>
+                </article>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

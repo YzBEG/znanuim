@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ tutor.user.get_full_name|default:tutor.user.username }} — Znanium</title>
-    <meta name="description" content="Профиль репетитора {{ tutor.user.get_full_name|default:tutor.user.username }} на платформе Znanium. Предметы, формат занятий, отзывы и стоимость урока.">
+    <meta name="description" content="Профиль репетитора {{ tutor.user.get_full_name|default:tutor.user.username }} на платформе Znanium. Предметы, отзывы и стоимость онлайн-урока.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -98,14 +98,8 @@
                             </div>
                             <div>
                                 <span>Формат</span>
-                                <strong>{{ tutor.get_lesson_format_display }}</strong>
+                                <strong>Онлайн</strong>
                             </div>
-                            {% if tutor.city %}
-                            <div>
-                                <span>Город</span>
-                                <strong>{{ tutor.city }}</strong>
-                            </div>
-                            {% endif %}
                         </div>
                     </div>
                 </article>
@@ -148,26 +142,14 @@
                 <section class="content-section" id="formats">
                     <h2>Варианты занятий</h2>
                     <div class="lesson-options">
-                        {% if tutor.lesson_format == 'online' or tutor.lesson_format == 'both' %}
-                            <div class="lesson-option">
-                                <i class="fa-solid fa-video"></i>
-                                <div>
-                                    <strong>Занятия онлайн</strong>
-                                    <span>Урок проходит дистанционно, материалы остаются в личном кабинете.</span>
-                                </div>
-                                <b>от {{ tutor.price_per_hour|floatformat:0 }} ₽</b>
+                        <div class="lesson-option">
+                            <i class="fa-solid fa-video"></i>
+                            <div>
+                                <strong>Занятия онлайн</strong>
+                                <span>Урок проходит дистанционно, материалы остаются в личном кабинете.</span>
                             </div>
-                        {% endif %}
-                        {% if tutor.lesson_format == 'offline' or tutor.lesson_format == 'both' %}
-                            <div class="lesson-option">
-                                <i class="fa-solid fa-location-dot"></i>
-                                <div>
-                                    <strong>Очные занятия</strong>
-                                    <span>{% if tutor.city %}Город: {{ tutor.city }}.{% else %}Место занятий уточняется с преподавателем.{% endif %}</span>
-                                </div>
-                                <b>от {{ tutor.price_per_hour|floatformat:0 }} ₽</b>
-                            </div>
-                        {% endif %}
+                            <b>от {{ tutor.price_per_hour|floatformat:0 }} ₽</b>
+                        </div>
                     </div>
                 </section>
 

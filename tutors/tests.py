@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.test import TestCase
 
+from payments.models import Transaction
 from users.models import User
 
 from .models import TutorProfile
@@ -22,6 +23,11 @@ class PublicTutorPageTests(TestCase):
             experience_years=4,
             price_per_hour=Decimal('1300.00'),
             verification_status=TutorProfile.VerificationStatus.APPROVED,
+        )
+        Transaction.objects.create(
+            user=self.tutor_user,
+            amount=Decimal('200.00'),
+            type=Transaction.Type.LISTING_FEE,
         )
 
     def test_home_page_renders(self):

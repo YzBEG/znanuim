@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=16">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=19">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -91,6 +91,17 @@
                             {{ form.password2 }}
                             {% if form.password2.errors %}<span class="field-error">{{ form.password2.errors.0 }}</span>{% endif %}
                         </div>
+                        <div class="form-field full">
+                            <label class="consent-check">
+                                {{ form.personal_data_consent }}
+                                <span>
+                                    Я согласен на обработку персональных данных и принимаю
+                                    <button type="button" class="legal-link" data-legal-open="personalDataModal">согласие</button>
+                                    и <button type="button" class="legal-link" data-legal-open="privacyPolicyModal">политику конфиденциальности</button>.
+                                </span>
+                            </label>
+                            {% if form.personal_data_consent.errors %}<span class="field-error">{{ form.personal_data_consent.errors.0 }}</span>{% endif %}
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-primary auth-submit">Создать аккаунт</button>
@@ -100,7 +111,6 @@
             </article>
         </section>
     </main>
+    {% include "users/_legal_modals.html" %}
 </body>
 </html>
-
-

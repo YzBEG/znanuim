@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=16">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=18">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -77,8 +77,8 @@
                 <article class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-ruble-sign"></i></div>
                     <span>Доход платформы</span>
-                    <strong>{{ director_wallet.balance|floatformat:0 }} ₽</strong>
-                    <small>баланс пользователя {{ director.username }}</small>
+                    <strong>{{ platform_owner_wallet.balance|floatformat:0 }} ₽</strong>
+                    <small>баланс владельца {{ platform_owner.username }}</small>
                 </article>
             </div>
 
@@ -111,6 +111,16 @@
                             <strong>Django Admin</strong>
                             <span>Глубокое управление данными</span>
                         </a>
+                        <a href="{% url 'withdraw_funds' %}">
+                            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                            <strong>Вывод средств владельца</strong>
+                            <span>Создать заявку на выплату дохода</span>
+                        </a>
+                        <a href="/admin/payments/withdrawalrequest/">
+                            <i class="fa-solid fa-money-bill-transfer"></i>
+                            <strong>Заявки на вывод</strong>
+                            <span>{{ withdrawals_pending }} ожидают обработки</span>
+                        </a>
                     </div>
                 </article>
 
@@ -118,7 +128,7 @@
                     <div class="section-head">
                         <div>
                             <h2>Состояние процессов</h2>
-                            <p>Что важно проверить перед демонстрацией.</p>
+                            <p>Что важно проверить перед запуском и ежедневной работой сервиса.</p>
                         </div>
                     </div>
                     <div class="admin-health-list">
@@ -134,9 +144,12 @@
                 <div class="section-head">
                     <div>
                         <h2>Финансы платформы</h2>
-                        <p>Комиссия 12%, платное размещение анкет и Znanium Pro поступают на баланс директора.</p>
+                        <p>Комиссия 12%, платное размещение анкет и Znanium Pro поступают на баланс администратора-владельца.</p>
                     </div>
                     <span class="status-pill status-confirmed">{{ platform_income|floatformat:0 }} ₽ всего</span>
+                </div>
+                <div class="compact-money-form">
+                    <a class="btn btn-soft" href="{% url 'withdraw_funds' %}"><i class="fa-solid fa-arrow-up-from-bracket"></i>Вывести средства владельца</a>
                 </div>
                 {% if recent_platform_transactions %}
                     <div class="transaction-list">
@@ -210,4 +223,3 @@
     </main>
 </body>
 </html>
-

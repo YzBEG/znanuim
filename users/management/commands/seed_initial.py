@@ -5,20 +5,20 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from lessons.models import AvailabilitySlot, LessonOrder, LessonSession
-from payments.models import Wallet
-from payments.services import get_director_user
+from payments.models import Transaction, Wallet
+from payments.services import get_platform_owner_user
 from tutors.models import Subject, TutorProfile
 from users.models import StudentProfile, User
 
 
 class Command(BaseCommand):
-    help = "Create demo users, subjects, tutor profiles, slots, and one confirmed lesson."
+    help = "Create initial users, subjects, tutor profiles, slots, and one confirmed lesson."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--password",
             default="Znanium2026!",
-            help="Password for demo users.",
+            help="Password for initial users.",
         )
 
     def handle(self, *args, **options):
@@ -50,13 +50,14 @@ class Command(BaseCommand):
             last_name="Соловьёв",
             email="tutor@znanium.local",
         )
+        Wallet.objects.update_or_create(user=admin, defaults={"balance": Decimal("0.00")})
         Wallet.objects.update_or_create(user=student, defaults={"balance": Decimal("5000.00")})
         Wallet.objects.update_or_create(user=tutor, defaults={"balance": Decimal("2000.00")})
 
-        StudentProfile.objects.get_or_create(
+        StudentProfile.objects.update_or_create(
             user=student,
             defaults={
-                "class_level": "10 класс",
+                "class_level": "студент",
                 "learning_goal": "Подготовка к экзаменам и повышение успеваемости.",
             },
         )
@@ -72,7 +73,7 @@ class Command(BaseCommand):
                 "experience_years": 7,
                 "price_per_hour": Decimal("1500.00"),
                 "lesson_format": TutorProfile.LessonFormat.ONLINE,
-                "city": "Москва",
+                "city": "",
                 "rating": Decimal("4.80"),
                 "review_count": 6,
                 "verification_status": TutorProfile.VerificationStatus.APPROVED,
@@ -82,10 +83,21 @@ class Command(BaseCommand):
         )
         profile.subjects.set(subjects[:3])
 
-        get_director_user()
+        get_platform_owner_user()
+        Transaction.objects.filter(
+            user=tutor,
+            type__in=[Transaction.Type.LISTING_FEE, Transaction.Type.PRO_SUBSCRIPTION],
+            external_payment_id__in=["seed-listing", "seed-pro"],
+        ).delete()
+        Transaction.objects.create(
+            user=tutor,
+            type=Transaction.Type.LISTING_FEE,
+            amount=Decimal("200.00"),
+            external_payment_id="seed-listing",
+        )
         self.create_slots_and_order(profile, student, tutor)
 
-        self.stdout.write(self.style.SUCCESS("Demo data created."))
+        self.stdout.write(self.style.SUCCESS("Initial data created."))
         self.stdout.write(f"Admin: admin / {password}")
         self.stdout.write(f"Student: YzBEG / {password}")
         self.stdout.write(f"Tutor: GUGU / {password}")
@@ -102,6 +114,8 @@ class Command(BaseCommand):
                 "is_staff": fields.get("is_staff", False),
                 "is_superuser": fields.get("is_superuser", False),
                 "is_active": True,
+                "personal_data_consent": True,
+                "personal_data_consent_at": timezone.now(),
             },
         )
         user.set_password(password)

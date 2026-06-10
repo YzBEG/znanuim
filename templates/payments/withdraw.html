@@ -1,0 +1,113 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Вывод средств — Znanium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=18">
+    <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
+    <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
+</head>
+<body{% if user.is_authenticated %} data-authenticated="1"{% endif %}>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="{% url 'home' %}">Znanium</a>
+            <div class="header-actions">
+                {% if user.is_staff or user.role == 'admin' %}
+                    <a class="btn btn-ghost" href="{% url 'admin_dashboard' %}">Админ-панель</a>
+                {% elif user.role == 'tutor' %}
+                    <a class="btn btn-ghost" href="{% url 'tutor_dashboard' %}">Кабинет</a>
+                {% else %}
+                    <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Кабинет</a>
+                {% endif %}
+                <a class="btn btn-primary" href="{% url 'logout' %}">Выход</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <h1>{% if is_owner_withdrawal %}Вывод средств владельца{% else %}Вывод средств{% endif %}</h1>
+                <p>Заявка фиксируется внутри системы и передаётся администратору на обработку. Выплата выполняется после проверки реквизитов.</p>
+            </div>
+        </section>
+
+        <section class="shell workspace-grid">
+            <div class="workspace-stack">
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <article class="workspace-card payment-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Создать заявку</h2>
+                            <p>Укажите сумму и реквизиты. Деньги спишутся с внутреннего баланса, а заявка появится в истории.</p>
+                        </div>
+                    </div>
+
+                    <form class="top-up-form" method="post" action="{% url 'withdraw_funds' %}">
+                        {% csrf_token %}
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="amount">Сумма вывода</label>
+                                <input id="amount" name="amount" type="number" min="100" step="50" placeholder="1000" required>
+                            </div>
+                            <div class="form-field full">
+                                <label for="requisites">Реквизиты</label>
+                                <textarea id="requisites" name="requisites" placeholder="Банк, номер карты/счёта, ФИО получателя" required></textarea>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" type="submit"><i class="fa-solid fa-arrow-up-from-bracket"></i>Создать заявку на вывод</button>
+                    </form>
+                </article>
+            </div>
+
+            <aside class="side-stack">
+                <article class="workspace-card balance-side-card">
+                    <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
+                    <span>Баланс</span>
+                    <strong>{{ wallet.balance|floatformat:0 }} ₽</strong>
+                    <p>Владелец баланса: {{ target_user.get_full_name|default:target_user.username }}.</p>
+                </article>
+
+                <article class="workspace-card finance-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>История заявок</h2>
+                            <p>Последние запросы на вывод средств.</p>
+                        </div>
+                    </div>
+                    {% if recent_withdrawals %}
+                        <div class="transaction-list">
+                            {% for withdrawal in recent_withdrawals %}
+                                <div class="transaction-row">
+                                    <div>
+                                        <strong>{{ withdrawal.amount|floatformat:0 }} ₽</strong>
+                                        <span>{{ withdrawal.created_at|date:"d.m.Y H:i" }} · {{ withdrawal.get_status_display }}</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-panel compact-empty">
+                            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                            <h3>Заявок пока нет</h3>
+                        </div>
+                    {% endif %}
+                </article>
+            </aside>
+        </section>
+    </main>
+</body>
+</html>

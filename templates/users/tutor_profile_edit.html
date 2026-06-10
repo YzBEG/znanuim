@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=17">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=18">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -110,15 +110,9 @@
                         </div>
                         <div class="form-field">
                             <label for="lesson_format">Формат занятий</label>
-                            <select id="lesson_format" name="lesson_format" required>
-                                <option value="online" {% if profile.lesson_format == 'online' %}selected{% endif %}>Онлайн</option>
-                                <option value="offline" {% if profile.lesson_format == 'offline' %}selected{% endif %}>Очный</option>
-                                <option value="both" {% if profile.lesson_format == 'both' %}selected{% endif %}>Очно и онлайн</option>
-                            </select>
-                        </div>
-                        <div class="form-field">
-                            <label for="city">Город</label>
-                            <input type="text" id="city" name="city" value="{{ profile.city }}" placeholder="Москва">
+                            <input type="text" id="lesson_format" value="Онлайн" disabled>
+                            <input type="hidden" name="lesson_format" value="online">
+                            <span class="field-help">Znanium сейчас работает как онлайн-платформа, поэтому заявки создаются только на дистанционные занятия.</span>
                         </div>
                     </div>
 
@@ -190,7 +184,7 @@
                         <img src="{% if profile.avatar_url %}{{ profile.avatar_url }}{% else %}https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&size=160&background=10367d&color=fff&bold=true{% endif %}" alt="{{ user.get_full_name|default:user.username }}">
                         <div>
                             <h3>{{ user.get_full_name|default:user.username }}</h3>
-                            <p>{{ profile.get_lesson_format_display }}{% if profile.city %}, {{ profile.city }}{% endif %}</p>
+                            <p>Онлайн-занятия</p>
                         </div>
                     </div>
                     <div class="quick-links">
@@ -205,5 +199,3 @@
     </main>
 </body>
 </html>
-
-

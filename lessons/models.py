@@ -24,9 +24,9 @@ class AvailabilitySlot(models.Model):
 class LessonOrder(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", "Ожидает подтверждения"
-        CONFIRMED = "confirmed", "Подтвержден"
-        COMPLETED = "completed", "Проведен"
-        CANCELLED = "cancelled", "Отменен"
+        CONFIRMED = "confirmed", "Подтверждён"
+        COMPLETED = "completed", "Проведён"
+        CANCELLED = "cancelled", "Отменён"
         IN_DISPUTE = "in_dispute", "В споре"
 
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="student_orders")
@@ -51,6 +51,7 @@ class LessonOrder(models.Model):
 class LessonSession(models.Model):
     order = models.OneToOneField(LessonOrder, on_delete=models.CASCADE, related_name="session")
     room_name = models.CharField(max_length=120, unique=True)
+    meeting_url = models.URLField(max_length=500, blank=True)
     started_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
     tutor_joined_at = models.DateTimeField(null=True, blank=True)
@@ -61,39 +62,37 @@ class LessonSession(models.Model):
 
 
 class LessonMaterial(models.Model):
-    """Материалы к уроку"""
     order = models.ForeignKey(LessonOrder, on_delete=models.CASCADE, related_name="materials")
     title = models.CharField(max_length=255)
     file = models.FileField(upload_to="lesson_materials/")
     description = models.TextField(blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         ordering = ["-uploaded_at"]
-    
+
     def __str__(self):
-        return f"{self.title} - Урок #{self.order_id}"
-    
+        return f"{self.title} - урок #{self.order_id}"
+
     def get_file_icon(self):
-        """Возвращает иконку в зависимости от типа файла"""
-        ext = self.file.name.split('.')[-1].lower()
+        ext = self.file.name.split(".")[-1].lower()
         icons = {
-            'pdf': 'fa-file-pdf',
-            'doc': 'fa-file-word',
-            'docx': 'fa-file-word',
-            'xls': 'fa-file-excel',
-            'xlsx': 'fa-file-excel',
-            'ppt': 'fa-file-powerpoint',
-            'pptx': 'fa-file-powerpoint',
-            'jpg': 'fa-file-image',
-            'jpeg': 'fa-file-image',
-            'png': 'fa-file-image',
-            'gif': 'fa-file-image',
-            'zip': 'fa-file-zipper',
-            'rar': 'fa-file-zipper',
+            "pdf": "fa-file-pdf",
+            "doc": "fa-file-word",
+            "docx": "fa-file-word",
+            "xls": "fa-file-excel",
+            "xlsx": "fa-file-excel",
+            "ppt": "fa-file-powerpoint",
+            "pptx": "fa-file-powerpoint",
+            "jpg": "fa-file-image",
+            "jpeg": "fa-file-image",
+            "png": "fa-file-image",
+            "gif": "fa-file-image",
+            "zip": "fa-file-zipper",
+            "rar": "fa-file-zipper",
         }
-        return icons.get(ext, 'fa-file')
+        return icons.get(ext, "fa-file")
 
 
 class Dispute(models.Model):
