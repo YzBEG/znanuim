@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -28,6 +28,22 @@ def _is_telemost_link(url):
     return normalized.startswith("https://") and (
         "telemost.yandex." in normalized or "yandex.ru/telemost" in normalized
     )
+
+
+ALLOWED_MATERIAL_EXTENSIONS = {
+    "pdf",
+    "doc",
+    "docx",
+    "xls",
+    "xlsx",
+    "ppt",
+    "pptx",
+    "jpg",
+    "jpeg",
+    "png",
+    "zip",
+}
+MAX_MATERIAL_FILE_SIZE = 20 * 1024 * 1024
 
 
 @login_required
@@ -190,7 +206,12 @@ def book_lesson(request, tutor_id):
 
     if request.method == "POST":
         slot_id = request.POST.get("slot_id")
-        slot = get_object_or_404(AvailabilitySlot, id=slot_id, tutor=tutor_profile, is_booked=False)
+        try:
+            slot_id = int(slot_id)
+        except (TypeError, ValueError):
+            messages.error(request, "Выберите корректный свободный слот.")
+            return redirect("book_lesson", tutor_id=tutor_profile.id)
+
         wallet = get_wallet(request.user)
         lesson_price = money(tutor_profile.price_per_hour)
 
@@ -201,16 +222,28 @@ def book_lesson(request, tutor_id):
             )
             return redirect("student_dashboard")
 
-        order = LessonOrder.objects.create(
-            student=request.user,
-            tutor=tutor_profile.user,
-            slot=slot,
-            price=tutor_profile.price_per_hour,
-            status=LessonOrder.Status.PENDING,
-        )
-
-        slot.is_booked = True
-        slot.save(update_fields=["is_booked"])
+        try:
+            with transaction.atomic():
+                slot = AvailabilitySlot.objects.select_for_update().get(
+                    id=slot_id,
+                    tutor=tutor_profile,
+                    is_booked=False,
+                )
+                order = LessonOrder.objects.create(
+                    student=request.user,
+                    tutor=tutor_profile.user,
+                    slot=slot,
+                    price=tutor_profile.price_per_hour,
+                    status=LessonOrder.Status.PENDING,
+                )
+                slot.is_booked = True
+                slot.save(update_fields=["is_booked"])
+        except AvailabilitySlot.DoesNotExist:
+            messages.error(request, "Этот слот уже занят или недоступен. Выберите другое время.")
+            return redirect("book_lesson", tutor_id=tutor_profile.id)
+        except IntegrityError:
+            messages.error(request, "Этот слот уже занят. Выберите другое время.")
+            return redirect("book_lesson", tutor_id=tutor_profile.id)
 
         create_notification(
             recipient=tutor_profile.user,
@@ -420,11 +453,17 @@ def upload_material(request, order_id):
     order = get_object_or_404(LessonOrder, id=order_id, tutor=request.user)
 
     if request.method == "POST":
-        title = request.POST.get("title", "")
+        title = request.POST.get("title", "").strip()
         description = request.POST.get("description", "")
         file = request.FILES.get("file")
 
-        if file and title:
+        if not file or not title:
+            messages.error(request, "Заполните название и выберите файл.")
+        elif file.size > MAX_MATERIAL_FILE_SIZE:
+            messages.error(request, "Файл слишком большой. Максимальный размер материала — 20 МБ.")
+        elif file.name.split(".")[-1].lower() not in ALLOWED_MATERIAL_EXTENSIONS:
+            messages.error(request, "Недопустимый тип файла. Загрузите документ, презентацию, таблицу, изображение или zip-архив.")
+        else:
             LessonMaterial.objects.create(
                 order=order,
                 title=title,
@@ -440,8 +479,6 @@ def upload_material(request, order_id):
                 kind=Notification.Kind.LESSON,
             )
             messages.success(request, "Материал загружен.")
-        else:
-            messages.error(request, "Заполните название и выберите файл.")
 
         return redirect("lesson_materials", order_id=order_id)
 

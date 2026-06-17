@@ -12,6 +12,7 @@ LESSON_COMMISSION_RATE = Decimal("0.12")
 TUTOR_LISTING_FEE = Decimal("200.00")
 ZNANIUM_PRO_FEE = Decimal("990.00")
 PLATFORM_OWNER_USERNAME = "admin"
+MAX_TOP_UP_AMOUNT = Decimal("1000000.00")
 
 
 def money(value):
@@ -49,6 +50,8 @@ def top_up_wallet(user, amount):
     amount = money(amount)
     if amount < Decimal("100.00"):
         raise ValueError("Минимальная сумма пополнения — 100 ₽")
+    if amount > MAX_TOP_UP_AMOUNT:
+        raise ValueError("Максимальная сумма пополнения за одну операцию — 1 000 000 ₽")
 
     wallet = Wallet.objects.select_for_update().get_or_create(user=user)[0]
     wallet.balance = money(wallet.balance + amount)

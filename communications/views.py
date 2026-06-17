@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Conversation, Message, Notification, create_notification
@@ -121,7 +121,6 @@ def notifications_list(request):
 
 
 @login_required
-@csrf_exempt
 @require_POST
 def notifications_mark_read(request):
     notification_id = request.POST.get("id")
@@ -151,7 +150,15 @@ def submit_lead(request):
         subject = request.POST.get('subject', '').strip()
         goal = request.POST.get('goal', 'grades')
         
-        if name and phone and subject:
+        valid_goals = {value for value, _ in LeadRequest.GOAL_CHOICES}
+        if goal not in valid_goals:
+            goal = 'grades'
+
+        if not name or not phone or not subject:
+            messages.error(request, 'Пожалуйста, заполните все поля.')
+        elif len(name) > 100 or len(phone) > 20 or len(subject) > 100:
+            messages.error(request, 'Проверьте длину полей: имя и предмет до 100 символов, телефон до 20 символов.')
+        else:
             LeadRequest.objects.create(
                 name=name,
                 phone=phone,
@@ -159,8 +166,6 @@ def submit_lead(request):
                 goal=goal
             )
             messages.success(request, 'Заявка отправлена. Мы свяжемся с вами в ближайшее время.')
-        else:
-            messages.error(request, 'Пожалуйста, заполните все поля.')
     
     next_url = request.POST.get('next', '')
     if next_url.startswith('/'):

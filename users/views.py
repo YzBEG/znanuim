@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from datetime import timedelta
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -266,6 +267,23 @@ def tutor_profile_edit(request):
     pro_paid_until = service_paid_until(request.user, Transaction.Type.PRO_SUBSCRIPTION)
 
     if request.method == "POST":
+        try:
+            experience_years = int(request.POST.get("experience_years", "0"))
+            price_per_hour = Decimal(request.POST.get("price_per_hour", "1000"))
+        except (TypeError, ValueError, InvalidOperation):
+            messages.error(request, "Укажите стаж и стоимость занятия числом.")
+            return redirect("tutor_profile_edit")
+
+        if not price_per_hour.is_finite():
+            messages.error(request, "Укажите корректную стоимость занятия.")
+            return redirect("tutor_profile_edit")
+        if experience_years < 0 or experience_years > 70:
+            messages.error(request, "Стаж должен быть от 0 до 70 лет.")
+            return redirect("tutor_profile_edit")
+        if price_per_hour < Decimal("100") or price_per_hour > Decimal("50000"):
+            messages.error(request, "Стоимость занятия должна быть от 100 до 50 000 ₽.")
+            return redirect("tutor_profile_edit")
+
         request.user.first_name = request.POST.get("first_name", request.user.first_name)
         request.user.last_name = request.POST.get("last_name", request.user.last_name)
         request.user.email = request.POST.get("email", request.user.email)
@@ -273,8 +291,8 @@ def tutor_profile_edit(request):
         request.user.save(update_fields=["first_name", "last_name", "email", "phone"])
 
         profile.bio = request.POST.get("bio", "")
-        profile.experience_years = int(request.POST.get("experience_years", 0))
-        profile.price_per_hour = float(request.POST.get("price_per_hour", 1000))
+        profile.experience_years = experience_years
+        profile.price_per_hour = price_per_hour
         profile.lesson_format = TutorProfile.LessonFormat.ONLINE
         profile.city = ""
 

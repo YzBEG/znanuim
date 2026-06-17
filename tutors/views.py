@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -10,6 +11,18 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import Subject, TutorProfile
+
+
+def _parse_non_negative_decimal(value):
+    if not value:
+        return None
+    try:
+        number = Decimal(value)
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+    if not number.is_finite():
+        return None
+    return number if number >= 0 else None
 
 
 def home(request):
@@ -57,17 +70,18 @@ def tutor_catalog(request):
         )
     )
 
-    subject_id = request.GET.get("subject")
-    min_price = request.GET.get("min_price")
-    max_price = request.GET.get("max_price")
-    q = request.GET.get("q")
+    raw_subject_id = request.GET.get("subject")
+    subject_id = raw_subject_id if raw_subject_id and raw_subject_id.isdigit() else ""
+    min_price = _parse_non_negative_decimal(request.GET.get("min_price"))
+    max_price = _parse_non_negative_decimal(request.GET.get("max_price"))
+    q = (request.GET.get("q") or "").strip()[:100]
     sort = request.GET.get("sort") or "rating"
 
     if subject_id:
         tutors = tutors.filter(subjects__id=subject_id)
-    if min_price:
+    if min_price is not None:
         tutors = tutors.filter(price_per_hour__gte=min_price)
-    if max_price:
+    if max_price is not None:
         tutors = tutors.filter(price_per_hour__lte=max_price)
     if q:
         tutors = tutors.filter(
