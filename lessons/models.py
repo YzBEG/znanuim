@@ -25,6 +25,7 @@ class LessonOrder(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", "Ожидает подтверждения"
         CONFIRMED = "confirmed", "Подтверждён"
+        AWAITING_STUDENT_CONFIRMATION = "awaiting_student_confirmation", "Ожидает подтверждения ученика"
         COMPLETED = "completed", "Проведён"
         CANCELLED = "cancelled", "Отменён"
         IN_DISPUTE = "in_dispute", "В споре"
@@ -33,7 +34,17 @@ class LessonOrder(models.Model):
     tutor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="tutor_orders")
     slot = models.OneToOneField(AvailabilitySlot, on_delete=models.PROTECT, related_name="order")
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=40, choices=Status.choices, default=Status.PENDING)
+    tutor_completed_at = models.DateTimeField(null=True, blank=True)
+    student_confirmed_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancelled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cancelled_orders",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

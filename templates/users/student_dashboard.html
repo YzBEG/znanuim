@@ -109,7 +109,7 @@
 
                                 <div class="student-group-lessons">
                                     {% for order in group.orders %}
-                                        <div class="student-group-lesson" data-lesson-status="{% if order.status == 'completed' %}past{% else %}upcoming{% endif %}">
+                                        <div class="student-group-lesson" data-lesson-status="{% if order.status == 'completed' or order.status == 'cancelled' or order.status == 'in_dispute' %}past{% else %}upcoming{% endif %}">
                                             <div>
                                                 <strong>{{ order.slot.start_at|date:"d.m.Y H:i" }} - {{ order.slot.end_at|date:"H:i" }}</strong>
                                                 <span>{{ order.price|floatformat:0 }} ₽</span>
@@ -119,10 +119,19 @@
                                                     <span class="status-pill status-confirmed">{{ order.get_status_display }}</span>
                                                     <a href="{% url 'video_lesson' order.id %}" class="btn btn-primary"><i class="fa-solid fa-video"></i>Урок</a>
                                                     <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
+                                                    <a href="{% url 'cancel_order' order.id %}" class="btn btn-danger" onclick="return confirm('Отменить подтверждённый урок?')">Отменить</a>
+                                                {% elif order.status == 'awaiting_student_confirmation' %}
+                                                    <span class="status-pill status-pending">Ждёт вашего подтверждения</span>
+                                                    <a href="{% url 'confirm_lesson_completion' order.id %}" class="btn btn-primary" onclick="return confirm('Подтвердить, что урок был проведён? После подтверждения оплата будет списана.')">Подтвердить урок</a>
+                                                    <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
+                                                    <form method="post" action="{% url 'dispute_lesson_completion' order.id %}" class="inline-form">
+                                                        {% csrf_token %}
+                                                        <button class="btn btn-danger" type="submit" onclick="return confirm('Сообщить о проблеме? Урок перейдёт в спор, деньги не будут начислены репетитору до решения администратора.')">Проблема</button>
+                                                    </form>
                                                 {% elif order.status == 'pending' %}
                                                     <span class="status-pill status-pending">{{ order.get_status_display }}</span>
                                                     <a href="{% url 'cancel_order' order.id %}" class="btn btn-danger" onclick="return confirm('Отменить заявку?')">Отменить</a>
-                                                {% else %}
+                                                {% elif order.status == 'completed' %}
                                                     <span class="status-pill status-completed">Проведён</span>
                                                     <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
                                                     {% if not order.has_review %}
@@ -130,6 +139,12 @@
                                                     {% else %}
                                                         <span class="status-pill status-confirmed"><i class="fa-solid fa-check"></i>Отзыв оставлен</span>
                                                     {% endif %}
+                                                {% elif order.status == 'in_dispute' %}
+                                                    <span class="status-pill status-pending">В споре</span>
+                                                    <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
+                                                {% elif order.status == 'cancelled' %}
+                                                    <span class="status-pill status-pending">Отменён</span>
+                                                    <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
                                                 {% endif %}
                                             </div>
                                         </div>

@@ -16,7 +16,7 @@ from communications.models import Notification, create_notification
 from payments.services import complete_paid_lesson, get_wallet, money, tutor_publication_is_active
 from tutors.models import TutorProfile
 
-from .models import AvailabilitySlot, LessonMaterial, LessonOrder, LessonSession
+from .models import AvailabilitySlot, Dispute, LessonMaterial, LessonOrder, LessonSession
 
 
 def _lesson_time_text(order):
@@ -285,52 +285,134 @@ def reject_order(request, order_id):
 
 @login_required
 def cancel_order(request, order_id):
-    order = get_object_or_404(LessonOrder, id=order_id, student=request.user, status=LessonOrder.Status.PENDING)
-    tutor = order.tutor
-    lesson_time = _lesson_time_text(order)
-
-    order.slot.is_booked = False
-    order.slot.save(update_fields=["is_booked"])
-    order.delete()
-
-    create_notification(
-        recipient=tutor,
-        title="Заявка отменена",
-        body=f"{request.user.get_full_name() or request.user.username} отменил заявку на {lesson_time}.",
-        url=reverse("tutor_dashboard"),
-        kind=Notification.Kind.LESSON,
+    order = get_object_or_404(
+        LessonOrder.objects.select_related("student", "tutor", "slot"),
+        id=order_id,
     )
+    if request.user not in (order.student, order.tutor):
+        messages.error(request, "Доступ запрещён.")
+        return redirect("home")
 
-    messages.info(request, "Заявка отменена.")
-    return redirect("student_dashboard")
+    lesson_time = _lesson_time_text(order)
+    other_user = order.tutor if request.user == order.student else order.student
+    redirect_to = "student_dashboard" if request.user == order.student else "tutor_dashboard"
+
+    if order.status == LessonOrder.Status.PENDING and request.user == order.student:
+        order.slot.is_booked = False
+        order.slot.save(update_fields=["is_booked"])
+        order.delete()
+        create_notification(
+            recipient=other_user,
+            title="Заявка отменена",
+            body=f"{request.user.get_full_name() or request.user.username} отменил заявку на {lesson_time}.",
+            url=reverse("tutor_dashboard"),
+            kind=Notification.Kind.LESSON,
+        )
+        messages.info(request, "Заявка отменена.")
+        return redirect(redirect_to)
+
+    if order.status == LessonOrder.Status.CONFIRMED:
+        order.status = LessonOrder.Status.CANCELLED
+        order.cancelled_by = request.user
+        order.cancelled_at = timezone.now()
+        order.slot.is_booked = False
+        order.slot.save(update_fields=["is_booked"])
+        order.save(update_fields=["status", "cancelled_by", "cancelled_at", "updated_at"])
+        create_notification(
+            recipient=other_user,
+            title="Урок отменён",
+            body=f"{request.user.get_full_name() or request.user.username} отменил занятие на {lesson_time}.",
+            url=reverse("student_dashboard" if other_user == order.student else "tutor_dashboard"),
+            kind=Notification.Kind.LESSON,
+        )
+        messages.info(request, "Урок отменён. Оплата по нему не списывается.")
+        return redirect(redirect_to)
+
+    messages.error(request, "Этот урок уже нельзя отменить обычным способом.")
+    return redirect(redirect_to)
 
 
 @login_required
 def complete_lesson(request, order_id):
     order = get_object_or_404(LessonOrder, id=order_id, tutor=request.user, status=LessonOrder.Status.CONFIRMED)
-    try:
-        payment_created = complete_paid_lesson(order)
-    except ValueError as error:
-        messages.error(request, str(error))
-        return redirect("tutor_dashboard")
-
-    order.status = LessonOrder.Status.COMPLETED
-    order.save(update_fields=["status", "updated_at"])
+    order.status = LessonOrder.Status.AWAITING_STUDENT_CONFIRMATION
+    order.tutor_completed_at = timezone.now()
+    order.save(update_fields=["status", "tutor_completed_at", "updated_at"])
     if hasattr(order, "session"):
         order.session.ended_at = timezone.now()
         order.session.save(update_fields=["ended_at"])
     create_notification(
         recipient=order.student,
-        title="Урок завершён",
-        body=f"Занятие с {request.user.get_full_name() or request.user.username} отмечено как проведённое.",
-        url=reverse("lesson_materials", args=[order.id]),
+        title="Подтвердите проведение урока",
+        body=f"{request.user.get_full_name() or request.user.username} отметил занятие как проведённое. Подтвердите урок или сообщите о проблеме.",
+        url=reverse("student_dashboard"),
+        kind=Notification.Kind.LESSON,
+    )
+    messages.success(request, "Урок отправлен ученику на подтверждение. Деньги будут начислены после подтверждения.")
+    return redirect("tutor_dashboard")
+
+
+@login_required
+def confirm_lesson_completion(request, order_id):
+    order = get_object_or_404(
+        LessonOrder,
+        id=order_id,
+        student=request.user,
+        status=LessonOrder.Status.AWAITING_STUDENT_CONFIRMATION,
+    )
+    try:
+        payment_created = complete_paid_lesson(order)
+    except ValueError as error:
+        messages.error(request, str(error))
+        return redirect("student_dashboard")
+
+    order.status = LessonOrder.Status.COMPLETED
+    order.student_confirmed_at = timezone.now()
+    order.save(update_fields=["status", "student_confirmed_at", "updated_at"])
+    create_notification(
+        recipient=order.tutor,
+        title="Урок подтверждён",
+        body=f"{request.user.get_full_name() or request.user.username} подтвердил проведение занятия на {_lesson_time_text(order)}.",
+        url=reverse("tutor_dashboard"),
         kind=Notification.Kind.LESSON,
     )
     if payment_created:
-        messages.success(request, "Урок завершён. Оплата списана, выплата и комиссия рассчитаны.")
+        messages.success(request, "Урок подтверждён. Оплата списана, репетитору начислена выплата с учётом комиссии платформы.")
     else:
-        messages.success(request, "Урок уже был завершён и оплачен ранее.")
-    return redirect("tutor_dashboard")
+        messages.success(request, "Урок уже был подтверждён и оплачен ранее.")
+    return redirect("student_dashboard")
+
+
+@login_required
+def dispute_lesson_completion(request, order_id):
+    order = get_object_or_404(
+        LessonOrder,
+        id=order_id,
+        student=request.user,
+        status=LessonOrder.Status.AWAITING_STUDENT_CONFIRMATION,
+    )
+    reason = request.POST.get("reason", "").strip() if request.method == "POST" else ""
+    if not reason:
+        reason = "Ученик сообщил о проблеме после завершения урока."
+
+    order.status = LessonOrder.Status.IN_DISPUTE
+    order.save(update_fields=["status", "updated_at"])
+    Dispute.objects.update_or_create(
+        order=order,
+        defaults={
+            "initiated_by": request.user,
+            "reason": reason,
+        },
+    )
+    create_notification(
+        recipient=order.tutor,
+        title="Урок переведён в спор",
+        body=f"{request.user.get_full_name() or request.user.username} не подтвердил занятие на {_lesson_time_text(order)}.",
+        url=reverse("tutor_dashboard"),
+        kind=Notification.Kind.LESSON,
+    )
+    messages.warning(request, "Урок переведён в спор. Оплата не будет начислена репетитору до решения администратора.")
+    return redirect("student_dashboard")
 
 
 @login_required
@@ -418,13 +500,16 @@ def video_lesson(request, order_id):
         messages.error(request, "Доступ запрещён.")
         return redirect("home")
 
-    if order.status != LessonOrder.Status.CONFIRMED:
-        messages.error(request, "Видеоурок доступен только для подтверждённых занятий.")
+    if order.status not in [
+        LessonOrder.Status.CONFIRMED,
+        LessonOrder.Status.AWAITING_STUDENT_CONFIRMATION,
+    ]:
+        messages.error(request, "Страница урока доступна только для подтверждённых занятий.")
         if request.user == order.tutor:
             return redirect("tutor_dashboard")
         return redirect("student_dashboard")
 
-    if request.user == order.student:
+    if request.user == order.student and order.status == LessonOrder.Status.CONFIRMED:
         wallet = get_wallet(request.user)
         if wallet.balance < money(order.price):
             messages.error(request, "Недостаточно средств для начала урока. Пополните баланс.")
@@ -485,7 +570,13 @@ def my_students(request):
 
     orders = LessonOrder.objects.filter(
         tutor=request.user,
-        status__in=[LessonOrder.Status.CONFIRMED, LessonOrder.Status.COMPLETED],
+        status__in=[
+            LessonOrder.Status.CONFIRMED,
+            LessonOrder.Status.AWAITING_STUDENT_CONFIRMATION,
+            LessonOrder.Status.COMPLETED,
+            LessonOrder.Status.CANCELLED,
+            LessonOrder.Status.IN_DISPUTE,
+        ],
     ).select_related("student", "slot").order_by("-slot__start_at")
 
     students_dict = {}

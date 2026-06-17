@@ -256,10 +256,16 @@
                                             </div>
                                         </div>
                                         <div class="card-actions">
-                                            <span class="status-pill status-confirmed">Подтверждён</span>
-                                            <a href="{% url 'video_lesson' order.id %}" class="btn btn-primary"><i class="fa-solid fa-video"></i>Видеоурок</a>
-                                            <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
-                                            <a href="{% url 'complete_lesson' order.id %}" class="btn btn-soft">Завершить</a>
+                                            {% if order.status == 'awaiting_student_confirmation' %}
+                                                <span class="status-pill status-pending">Ждём подтверждения ученика</span>
+                                                <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
+                                            {% else %}
+                                                <span class="status-pill status-confirmed">Подтверждён</span>
+                                                <a href="{% url 'video_lesson' order.id %}" class="btn btn-primary"><i class="fa-solid fa-video"></i>Видеоурок</a>
+                                                <a href="{% url 'lesson_materials' order.id %}" class="btn btn-soft">Материалы</a>
+                                                <a href="{% url 'complete_lesson' order.id %}" class="btn btn-soft" onclick="return confirm('Завершить урок и отправить ученику на подтверждение?')">Завершить</a>
+                                                <a href="{% url 'cancel_order' order.id %}" class="btn btn-danger" onclick="return confirm('Отменить подтверждённый урок? Оплата не будет списана.')">Отменить</a>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 {% endfor %}

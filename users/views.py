@@ -85,7 +85,11 @@ def student_dashboard(request):
 
     upcoming_lessons = LessonOrder.objects.filter(
         student=request.user,
-        status__in=[LessonOrder.Status.CONFIRMED, LessonOrder.Status.PENDING],
+        status__in=[
+            LessonOrder.Status.CONFIRMED,
+            LessonOrder.Status.PENDING,
+            LessonOrder.Status.AWAITING_STUDENT_CONFIRMATION,
+        ],
     ).select_related("tutor", "slot").order_by("slot__start_at")[:5]
 
     past_lessons = LessonOrder.objects.filter(
@@ -98,7 +102,10 @@ def student_dashboard(request):
         status__in=[
             LessonOrder.Status.PENDING,
             LessonOrder.Status.CONFIRMED,
+            LessonOrder.Status.AWAITING_STUDENT_CONFIRMATION,
             LessonOrder.Status.COMPLETED,
+            LessonOrder.Status.CANCELLED,
+            LessonOrder.Status.IN_DISPUTE,
         ],
     ).select_related(
         "tutor",
@@ -130,7 +137,7 @@ def student_dashboard(request):
         )
         group["orders"].append(order)
         group["materials_count"] += len(getattr(order, "_prefetched_objects_cache", {}).get("materials", []))
-        if order.status == LessonOrder.Status.COMPLETED:
+        if order.status in [LessonOrder.Status.COMPLETED, LessonOrder.Status.CANCELLED, LessonOrder.Status.IN_DISPUTE]:
             group["past_count"] += 1
         else:
             group["upcoming_count"] += 1
@@ -188,7 +195,10 @@ def tutor_dashboard(request):
 
     upcoming_lessons = LessonOrder.objects.filter(
         tutor=request.user,
-        status=LessonOrder.Status.CONFIRMED,
+        status__in=[
+            LessonOrder.Status.CONFIRMED,
+            LessonOrder.Status.AWAITING_STUDENT_CONFIRMATION,
+        ],
     ).select_related("student", "slot").order_by("slot__start_at")[:10]
 
     total_lessons = LessonOrder.objects.filter(

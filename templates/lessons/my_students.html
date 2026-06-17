@@ -75,6 +75,12 @@
                                     <div class="card-actions">
                                         {% if lesson.status == 'completed' %}
                                             <span class="status-pill status-completed">Проведён</span>
+                                        {% elif lesson.status == 'awaiting_student_confirmation' %}
+                                            <span class="status-pill status-pending">Ждём подтверждения ученика</span>
+                                        {% elif lesson.status == 'in_dispute' %}
+                                            <span class="status-pill status-pending">В споре</span>
+                                        {% elif lesson.status == 'cancelled' %}
+                                            <span class="status-pill status-pending">Отменён</span>
                                         {% elif lesson.status == 'confirmed' %}
                                             <span class="status-pill status-confirmed">Подтверждён</span>
                                         {% else %}
@@ -83,7 +89,8 @@
                                         <a href="{% url 'lesson_materials' lesson.id %}" class="btn btn-soft">Материалы</a>
                                         {% if lesson.status == 'confirmed' %}
                                             <a href="{% url 'video_lesson' lesson.id %}" class="btn btn-primary"><i class="fa-solid fa-video"></i>Видеоурок</a>
-                                            <a href="{% url 'complete_lesson' lesson.id %}" class="btn btn-soft">Завершить</a>
+                                            <a href="{% url 'complete_lesson' lesson.id %}" class="btn btn-soft" onclick="return confirm('Завершить урок и отправить ученику на подтверждение?')">Завершить</a>
+                                            <a href="{% url 'cancel_order' lesson.id %}" class="btn btn-danger" onclick="return confirm('Отменить подтверждённый урок? Оплата не будет списана.')">Отменить</a>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -108,5 +115,4 @@
     </main>
 </body>
 </html>
-
 

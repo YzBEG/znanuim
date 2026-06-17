@@ -168,8 +168,9 @@ class LessonOrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        order.status = LessonOrder.Status.COMPLETED
-        order.save(update_fields=['status', 'updated_at'])
+        order.status = LessonOrder.Status.AWAITING_STUDENT_CONFIRMATION
+        order.tutor_completed_at = timezone.now()
+        order.save(update_fields=['status', 'tutor_completed_at', 'updated_at'])
 
         serializer = self.get_serializer(order)
         return Response(serializer.data)

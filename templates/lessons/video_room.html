@@ -125,10 +125,30 @@
                     <a class="btn btn-soft" href="{% url 'lesson_materials' order.id %}">
                         <i class="fa-solid fa-folder-open"></i>Материалы урока
                     </a>
-                    {% if is_tutor %}
+                    {% if is_tutor and order.status == 'confirmed' %}
                         <a class="btn btn-primary complete-lesson-btn" href="{% url 'complete_lesson' order.id %}" onclick="return confirm('Отметить урок как проведённый?')">
                             <i class="fa-solid fa-check"></i>Отметить урок проведённым
                         </a>
+                        <a class="btn btn-danger" href="{% url 'cancel_order' order.id %}" onclick="return confirm('Отменить подтверждённый урок? Оплата не будет списана.')">
+                            <i class="fa-solid fa-xmark"></i>Отменить урок
+                        </a>
+                    {% elif is_tutor and order.status == 'awaiting_student_confirmation' %}
+                        <div class="meeting-wait-card">
+                            <i class="fa-regular fa-clock"></i>
+                            <span>Ждём подтверждения ученика. Деньги пока не начислены.</span>
+                        </div>
+                    {% elif not is_tutor and order.status == 'awaiting_student_confirmation' %}
+                        <a class="btn btn-primary" href="{% url 'confirm_lesson_completion' order.id %}" onclick="return confirm('Подтвердить, что урок был проведён? После подтверждения оплата будет списана.')">
+                            <i class="fa-solid fa-check"></i>Подтвердить урок
+                        </a>
+                        <form method="post" action="{% url 'dispute_lesson_completion' order.id %}" class="meeting-link-form">
+                            {% csrf_token %}
+                            <label for="dispute_reason">Что произошло?</label>
+                            <input id="dispute_reason" name="reason" type="text" placeholder="Например: урок не состоялся">
+                            <button class="btn btn-danger" type="submit">
+                                <i class="fa-solid fa-triangle-exclamation"></i>Сообщить о проблеме
+                            </button>
+                        </form>
                     {% endif %}
                 </div>
             </aside>
