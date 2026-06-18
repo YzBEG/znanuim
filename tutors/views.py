@@ -94,9 +94,9 @@ def tutor_catalog(request):
     tutors = tutors.distinct()
     sort_options = {
         "rating": ("-pro_rank", "-rating", "-review_count"),
-        "price_asc": ("-pro_rank", "price_per_hour", "-rating"),
-        "price_desc": ("-pro_rank", "-price_per_hour", "-rating"),
-        "experience": ("-pro_rank", "-experience_years", "-rating"),
+        "price_asc": ("price_per_hour", "-rating", "-pro_rank"),
+        "price_desc": ("-price_per_hour", "-rating", "-pro_rank"),
+        "experience": ("-experience_years", "-rating", "-pro_rank"),
     }
     tutors = tutors.order_by(*sort_options.get(sort, sort_options["rating"]))
 
