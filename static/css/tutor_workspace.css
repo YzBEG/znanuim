@@ -2602,8 +2602,8 @@ textarea {
   border-radius: 18px;
 }
 
-.student-group-lesson strong,
-.student-group-lesson span {
+.student-group-lesson > div:first-child strong,
+.student-group-lesson > div:first-child span {
   display: block;
 }
 
