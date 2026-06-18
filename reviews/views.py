@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Avg
 from .models import Review
+from .content_filter import contains_profanity
 from lessons.models import LessonOrder
 from tutors.models import TutorProfile
 
@@ -37,6 +38,9 @@ def leave_review(request, order_id):
             return redirect('leave_review', order_id=order.id)
 
         text = request.POST.get('text', '').strip()[:MAX_REVIEW_TEXT_LENGTH]
+        if contains_profanity(text):
+            messages.error(request, 'Отзыв содержит недопустимые выражения. Пожалуйста, измените текст.')
+            return redirect('leave_review', order_id=order.id)
         
         # Создаём отзыв
         Review.objects.create(
@@ -75,6 +79,9 @@ def reply_review(request, review_id):
     if request.method == 'POST':
         reply = request.POST.get('reply', '').strip()[:MAX_REVIEW_REPLY_LENGTH]
         if reply:
+            if contains_profanity(reply):
+                messages.error(request, 'Ответ содержит недопустимые выражения. Пожалуйста, измените текст.')
+                return redirect('reply_review', review_id=review.id)
             review.tutor_reply = reply
             review.save()
             messages.success(request, 'Ответ опубликован')

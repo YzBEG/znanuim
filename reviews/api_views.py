@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from .models import Review
+from .content_filter import contains_profanity
 from .serializers import ReviewSerializer
 
 
@@ -44,14 +45,19 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        reply_text = request.data.get('tutor_reply')
+        reply_text = (request.data.get('tutor_reply') or '').strip()
         if not reply_text:
             return Response(
                 {'error': 'Reply text is required.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if contains_profanity(reply_text):
+            return Response(
+                {'error': 'Reply contains forbidden words.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        review.tutor_reply = reply_text
+        review.tutor_reply = reply_text[:2000]
         review.save(update_fields=['tutor_reply'])
 
         serializer = self.get_serializer(review)

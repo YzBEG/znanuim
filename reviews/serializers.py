@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from lessons.models import LessonOrder
 from .models import Review
+from .content_filter import contains_profanity
 from tutors.serializers import UserSerializer
 
 
@@ -35,6 +36,12 @@ class ReviewSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Отзыв по этому уроку уже оставлен.')
 
         return order
+
+    def validate_text(self, text):
+        text = (text or "").strip()
+        if contains_profanity(text):
+            raise serializers.ValidationError("Отзыв содержит недопустимые выражения.")
+        return text
     
     def get_student_name(self, obj):
         return obj.student.get_full_name()

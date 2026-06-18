@@ -11,6 +11,7 @@ from tutors.models import TutorProfile
 from users.models import User
 
 from .models import Review
+from .content_filter import contains_profanity
 
 
 class ReviewApiTests(APITestCase):
@@ -62,6 +63,21 @@ class ReviewApiTests(APITestCase):
             text='Great lesson',
         )
 
+    def create_completed_order(self, days=2):
+        slot = AvailabilitySlot.objects.create(
+            tutor=self.tutor_profile,
+            start_at=timezone.now() + timedelta(days=days),
+            end_at=timezone.now() + timedelta(days=days, hours=1),
+            is_booked=True,
+        )
+        return LessonOrder.objects.create(
+            student=self.student,
+            tutor=self.tutor_user,
+            slot=slot,
+            price=Decimal('1500.00'),
+            status=LessonOrder.Status.COMPLETED,
+        )
+
     def test_review_list_serializes_existing_reviews(self):
         response = self.client.get('/api/reviews/')
 
@@ -80,19 +96,7 @@ class ReviewApiTests(APITestCase):
         self.assertEqual(response.data[0]['id'], self.review.id)
 
     def test_student_can_create_review_for_own_completed_order(self):
-        another_slot = AvailabilitySlot.objects.create(
-            tutor=self.tutor_profile,
-            start_at=timezone.now() + timedelta(days=2),
-            end_at=timezone.now() + timedelta(days=2, hours=1),
-            is_booked=True,
-        )
-        another_order = LessonOrder.objects.create(
-            student=self.student,
-            tutor=self.tutor_user,
-            slot=another_slot,
-            price=Decimal('1500.00'),
-            status=LessonOrder.Status.COMPLETED,
-        )
+        another_order = self.create_completed_order()
 
         self.client.force_authenticate(self.student)
         response = self.client.post(
@@ -121,3 +125,44 @@ class ReviewApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_profanity_filter_does_not_block_learning_words(self):
+        self.assertFalse(contains_profanity('Учёба понравилась, урок был полезным.'))
+
+    def test_leave_review_view_rejects_profanity(self):
+        another_order = self.create_completed_order(days=3)
+        self.client.login(username='student', password='test12345')
+
+        response = self.client.post(
+            f'/reviews/leave/{another_order.id}/',
+            {'score': 5, 'text': '\u043f \u0438 \u0437 \u0434 \u0435 \u0446'},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertFalse(Review.objects.filter(order=another_order).exists())
+
+    def test_api_rejects_profanity_in_review_text(self):
+        another_order = self.create_completed_order(days=4)
+        self.client.force_authenticate(self.student)
+
+        response = self.client.post(
+            '/api/reviews/',
+            {'order': another_order.id, 'score': 5, 'text': '\u043f \u0438 \u0437 \u0434 \u0435 \u0446'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(Review.objects.filter(order=another_order).exists())
+
+    def test_api_rejects_profanity_in_tutor_reply(self):
+        self.client.force_authenticate(self.tutor_user)
+
+        response = self.client.post(
+            f'/api/reviews/{self.review.id}/reply/',
+            {'tutor_reply': '\u043f \u0438 \u0437 \u0434 \u0435 \u0446'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.tutor_reply, '')
