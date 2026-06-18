@@ -102,14 +102,14 @@
                         {% csrf_token %}
                         <input type="hidden" name="decision" value="pay_tutor">
                         <button type="submit" class="btn btn-primary" onclick="return confirm('Подтвердить проведение урока и списать оплату?')">
-                            <i class="fa-solid fa-check"></i> Оплатить репетитору
+                            <i class="fa-solid fa-check"></i> Оплатить урок
                         </button>
                     </form>
                     <form method="post" action="{% url 'resolve_dispute' dispute.id %}">
                         {% csrf_token %}
                         <input type="hidden" name="decision" value="refund_student">
                         <button type="submit" class="btn btn-soft" onclick="return confirm('Отменить урок без списания оплаты?')">
-                            <i class="fa-solid fa-xmark"></i> Отменить без оплаты
+                            <i class="fa-solid fa-xmark"></i> Отменить оплату
                         </button>
                     </form>
                 {% else %}
@@ -129,4 +129,3 @@
     </main>
 </body>
 </html>
-
