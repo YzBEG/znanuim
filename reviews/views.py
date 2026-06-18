@@ -7,6 +7,10 @@ from lessons.models import LessonOrder
 from tutors.models import TutorProfile
 
 
+MAX_REVIEW_TEXT_LENGTH = 2000
+MAX_REVIEW_REPLY_LENGTH = 2000
+
+
 @login_required
 def leave_review(request, order_id):
     """Оставить отзыв после урока"""
@@ -23,8 +27,16 @@ def leave_review(request, order_id):
         return redirect('student_dashboard')
     
     if request.method == 'POST':
-        score = int(request.POST.get('score', 5))
-        text = request.POST.get('text', '').strip()
+        try:
+            score = int(request.POST.get('score', 5))
+        except (TypeError, ValueError, OverflowError):
+            messages.error(request, 'Укажите корректную оценку от 1 до 5.')
+            return redirect('leave_review', order_id=order.id)
+        if score < 1 or score > 5:
+            messages.error(request, 'Оценка должна быть от 1 до 5.')
+            return redirect('leave_review', order_id=order.id)
+
+        text = request.POST.get('text', '').strip()[:MAX_REVIEW_TEXT_LENGTH]
         
         # Создаём отзыв
         Review.objects.create(
@@ -61,7 +73,7 @@ def reply_review(request, review_id):
         return redirect('tutor_dashboard')
     
     if request.method == 'POST':
-        reply = request.POST.get('reply', '').strip()
+        reply = request.POST.get('reply', '').strip()[:MAX_REVIEW_REPLY_LENGTH]
         if reply:
             review.tutor_reply = reply
             review.save()
