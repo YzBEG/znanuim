@@ -1,7 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Conversation, Message, Notification, create_notification
@@ -109,6 +111,7 @@ def start_chat(request, user_id):
 
 @login_required
 @ensure_csrf_cookie
+@never_cache
 def notifications_list(request):
     notifications = Notification.objects.filter(recipient=request.user, is_read=False)[:8]
     return JsonResponse({
@@ -122,6 +125,8 @@ def notifications_list(request):
 
 @login_required
 @require_POST
+@csrf_exempt
+@never_cache
 def notifications_mark_read(request):
     notification_id = request.POST.get("id")
     queryset = Notification.objects.filter(recipient=request.user, is_read=False)

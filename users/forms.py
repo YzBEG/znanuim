@@ -17,6 +17,16 @@ class PersonalDataConsentMixin:
         },
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "personal_data_consent" in self.fields:
+            self.fields["personal_data_consent"].required = True
+
+    def clean_personal_data_consent(self):
+        if not self.cleaned_data.get("personal_data_consent"):
+            raise forms.ValidationError("Для регистрации нужно согласиться на обработку персональных данных.")
+        return True
+
 
 class StudentRegistrationForm(PersonalDataConsentMixin, UserCreationForm):
     email = forms.EmailField(required=True)

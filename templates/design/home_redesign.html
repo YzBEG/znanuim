@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/home_redesign.css' %}?v=19">
+    <link rel="stylesheet" href="{% static 'css/home_redesign.css' %}?v=20">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -97,7 +97,7 @@
                             <span class="panel-badge">онлайн</span>
                         </div>
                         <div class="tutor-preview active">
-                            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=220&q=85" alt="Репетитор математики">
+                            <img src="{% static 'images/home/hero-math-tutor.jpg' %}" alt="Репетитор математики">
                             <div>
                                 <strong>Анна Кириллова</strong>
                                 <span>Математика • 4.9</span>
@@ -105,7 +105,7 @@
                             <b>1200 ₽</b>
                         </div>
                         <div class="tutor-preview">
-                            <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=220&q=85" alt="Репетитор физики">
+                            <img src="{% static 'images/home/hero-physics-tutor.jpg' %}" alt="Репетитор физики">
                             <div>
                                 <strong>Дмитрий Соловьев</strong>
                                 <span>Физика • онлайн</span>
@@ -115,11 +115,11 @@
                         <a class="btn btn-primary panel-button" href="{% url 'tutor_catalog' %}">Забронировать урок</a>
                     </div>
                     <div class="hero-photo">
-                        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=900&q=85" alt="Студенты занимаются онлайн">
+                        <img src="{% static 'images/home/hero-students.jpg' %}" alt="Студенты занимаются онлайн">
                     </div>
                     <div class="stats-card">
-                        <div><strong>14</strong><span>репетиторов</span></div>
-                        <div><strong>88</strong><span>отзывов</span></div>
+                        <div><strong>{{ home_tutors_count }}</strong><span>репетиторов</span></div>
+                        <div><strong>{{ home_reviews_count }}</strong><span>отзывов</span></div>
                         <div><strong>24/7</strong><span>чат и материалы</span></div>
                     </div>
                 </div>
@@ -164,10 +164,10 @@
                         <p>Материалы, чат и история уроков остаются внутри Znanium.</p>
                     </article>
                     <figure class="step-photo photo-one">
-                        <img src="https://images.unsplash.com/photo-1596496181871-9681eacf9764?w=700&q=85" alt="Урок с репетитором">
+                        <img src="{% static 'images/home/step-lesson.jpg' %}" alt="Урок с репетитором">
                     </figure>
                     <figure class="step-photo photo-two">
-                        <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=700&q=85" alt="Индивидуальное обучение">
+                        <img src="{% static 'images/home/step-study.jpg' %}" alt="Индивидуальное обучение">
                     </figure>
                 </div>
             </div>

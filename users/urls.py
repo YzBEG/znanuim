@@ -18,6 +18,9 @@ urlpatterns = [
     
     # Админ-панель
     path('admin/panel/', admin_views.admin_dashboard, name='admin_dashboard'),
+    path('admin/disputes/', admin_views.disputes_list, name='disputes_list'),
+    path('admin/disputes/<int:dispute_id>/', admin_views.dispute_detail, name='dispute_detail'),
+    path('admin/disputes/<int:dispute_id>/resolve/', admin_views.resolve_dispute, name='resolve_dispute'),
     path('admin/moderation/', admin_views.moderation_dashboard, name='moderation_dashboard'),
     path('admin/tutor/<int:tutor_id>/', admin_views.tutor_detail_admin, name='tutor_detail_admin'),
     path('admin/tutor/<int:tutor_id>/approve/', admin_views.approve_tutor, name='approve_tutor'),

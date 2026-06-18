@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -164,7 +164,7 @@
                             {% for tutor in tutors %}
                                 <article class="tutor-card">
                                     <div class="tutor-card-top">
-                                        <img src="{% if tutor.avatar_url %}{{ tutor.avatar_url }}{% else %}https://ui-avatars.com/api/?name={{ tutor.user.get_full_name|default:tutor.user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}"
+                                        <img src="{% if tutor.avatar_url %}{{ tutor.avatar_url }}{% else %}{% static 'images/default-avatar.svg' %}{% endif %}"
                                              alt="{{ tutor.user.get_full_name|default:tutor.user.username }}"
                                              class="tutor-avatar">
                                         {% if tutor.has_pro %}

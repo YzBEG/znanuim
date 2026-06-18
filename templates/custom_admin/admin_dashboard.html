@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=18">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=22">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -19,6 +19,7 @@
             <a href="{% url 'home' %}" class="brand">Znanium Admin</a>
             <div class="header-actions">
                 <a href="{% url 'admin_dashboard' %}" class="btn btn-primary">Панель</a>
+                <a href="{% url 'disputes_list' %}" class="btn btn-ghost">Споры</a>
                 <a href="{% url 'moderation_dashboard' %}" class="btn btn-ghost">Модерация</a>
                 <a href="{% url 'lead_requests' %}" class="btn btn-ghost">Заявки</a>
                 <a href="/admin/" class="btn btn-soft">Django Admin</a>
@@ -55,6 +56,12 @@
                     <span>Уроки</span>
                     <strong>{{ orders_total }}</strong>
                     <small>{{ orders_pending }} ожидают, {{ orders_confirmed }} подтверждены</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                    <span>Споры</span>
+                    <strong>{{ disputes_pending }}</strong>
+                    <small>{{ orders_in_dispute }} уроков требуют решения</small>
                 </article>
                 <article class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-inbox"></i></div>
@@ -101,6 +108,11 @@
                             <strong>Заявки с сайта</strong>
                             <span>Обработать обращения с главной</span>
                         </a>
+                        <a href="{% url 'disputes_list' %}">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                            <strong>Спорные уроки</strong>
+                            <span>{{ disputes_pending }} ожидают решения администратора</span>
+                        </a>
                         <a href="{% url 'tutor_catalog' %}">
                             <i class="fa-solid fa-magnifying-glass"></i>
                             <strong>Публичный каталог</strong>
@@ -134,6 +146,7 @@
                     <div class="admin-health-list">
                         <div><span class="status-badge status-new">{{ tutors_pending }}</span><strong>анкет ожидают модерации</strong></div>
                         <div><span class="status-badge status-progress">{{ leads_new }}</span><strong>новых заявок требуют реакции</strong></div>
+                        <div><span class="status-badge status-new">{{ disputes_pending }}</span><strong>споров ожидают решения</strong></div>
                         <div><span class="status-badge status-contacted">{{ orders_confirmed }}</span><strong>уроков подтверждены</strong></div>
                         <div><span class="status-badge status-closed">{{ orders_completed }}</span><strong>уроков завершены</strong></div>
                     </div>
@@ -173,6 +186,45 @@
             </article>
 
             <div class="admin-panel-grid">
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Последние споры</h2>
+                            <p>Уроки, по которым требуется или уже принято решение администратора.</p>
+                        </div>
+                        <a href="{% url 'disputes_list' %}" class="btn btn-soft">Все споры</a>
+                    </div>
+                    <div class="list-stack">
+                        {% for dispute in recent_disputes %}
+                            <a class="admin-mini-row" href="{% url 'dispute_detail' dispute.id %}">
+                                <span class="student-avatar"><i class="fa-solid fa-scale-balanced"></i></span>
+                                <div>
+                                    <strong>
+                                        {% if dispute.order.slot %}
+                                            {{ dispute.order.slot.start_at|date:"d.m.Y H:i" }}
+                                        {% else %}
+                                            Урок #{{ dispute.order.id }}
+                                        {% endif %}
+                                    </strong>
+                                    <small>
+                                        {{ dispute.order.student.get_full_name|default:dispute.order.student.username }}
+                                        · {{ dispute.order.tutor.get_full_name|default:dispute.order.tutor.username }}
+                                    </small>
+                                </div>
+                                {% if dispute.decision == "pending" %}
+                                    <span class="status-badge status-new">Ожидает</span>
+                                {% elif dispute.decision == "pay_tutor" %}
+                                    <span class="status-badge status-closed">Оплачен</span>
+                                {% else %}
+                                    <span class="status-badge status-progress">Отменён</span>
+                                {% endif %}
+                            </a>
+                        {% empty %}
+                            <div class="empty-panel"><i class="fa-solid fa-scale-balanced"></i><h3>Споров пока нет</h3></div>
+                        {% endfor %}
+                    </div>
+                </article>
+
                 <article class="workspace-card">
                     <div class="section-head">
                         <div>
@@ -223,3 +275,4 @@
     </main>
 </body>
 </html>
+

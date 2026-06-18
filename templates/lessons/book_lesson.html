@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -66,7 +66,7 @@
         <section class="shell booking-layout">
             <div class="booking-main">
                 <article class="booking-card tutor-strip">
-                    <img src="{% if tutor.avatar_url %}{{ tutor.avatar_url }}{% else %}https://ui-avatars.com/api/?name={{ tutor.user.get_full_name|default:tutor.user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}"
+                    <img src="{% if tutor.avatar_url %}{{ tutor.avatar_url }}{% else %}{% static 'images/default-avatar.svg' %}{% endif %}"
                          alt="{{ tutor.user.get_full_name|default:tutor.user.username }}">
                     <div>
                         <span class="muted">Вы записываетесь к преподавателю</span>

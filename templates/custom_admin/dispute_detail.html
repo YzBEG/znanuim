@@ -1,0 +1,132 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Спор #{{ dispute.id }} — Znanium Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=22">
+    <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
+    <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
+</head>
+<body{% if user.is_authenticated %} data-authenticated="1"{% endif %}>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a href="{% url 'home' %}" class="brand">Znanium Admin</a>
+            <div class="header-actions">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-ghost">Панель</a>
+                <a href="{% url 'disputes_list' %}" class="btn btn-ghost"><i class="fa-solid fa-arrow-left"></i> К спорам</a>
+                <a href="{% url 'logout' %}" class="btn btn-primary">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Спор #{{ dispute.id }}</span>
+                <h1>Проверка спорного урока</h1>
+                <p>
+                    {% if dispute.order.slot %}
+                        Занятие от {{ dispute.order.slot.start_at|date:"d.m.Y H:i" }}.
+                    {% else %}
+                        Урок #{{ dispute.order.id }}.
+                    {% endif %}
+                    Администратор принимает решение после проверки ситуации.
+                </p>
+            </div>
+        </section>
+
+        <section class="shell admin-detail-grid">
+            <div class="workspace-stack">
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Информация по уроку</h2>
+                            <p>Данные заявки, участников и текущего состояния занятия.</p>
+                        </div>
+                    </div>
+                    <div class="info-list">
+                        <div class="info-row"><strong>Урок</strong><span>#{{ dispute.order.id }}</span></div>
+                        <div class="info-row">
+                            <strong>Дата и время</strong>
+                            <span>
+                                {% if dispute.order.slot %}
+                                    {{ dispute.order.slot.start_at|date:"d.m.Y H:i" }} – {{ dispute.order.slot.end_at|date:"H:i" }}
+                                {% else %}
+                                    Не указано
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="info-row"><strong>Ученик</strong><span>{{ dispute.order.student.get_full_name|default:dispute.order.student.username }}</span></div>
+                        <div class="info-row"><strong>Репетитор</strong><span>{{ dispute.order.tutor.get_full_name|default:dispute.order.tutor.username }}</span></div>
+                        <div class="info-row"><strong>Стоимость</strong><span>{{ dispute.order.price|floatformat:0 }} ₽</span></div>
+                        <div class="info-row"><strong>Статус урока</strong><span>{{ dispute.order.get_status_display }}</span></div>
+                        <div class="info-row"><strong>Инициатор</strong><span>{{ dispute.initiated_by.get_full_name|default:dispute.initiated_by.username }}</span></div>
+                        <div class="info-row"><strong>Создан</strong><span>{{ dispute.created_at|date:"d.m.Y H:i" }}</span></div>
+                        {% if dispute.resolved_at %}
+                            <div class="info-row"><strong>Решён</strong><span>{{ dispute.resolved_at|date:"d.m.Y H:i" }}</span></div>
+                        {% endif %}
+                    </div>
+                </article>
+
+                <article class="workspace-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>Причина спора</h2>
+                            <p>Комментарий, который был указан при переводе урока в спор.</p>
+                        </div>
+                    </div>
+                    <p class="item-muted">{{ dispute.reason|linebreaksbr }}</p>
+                </article>
+            </div>
+
+            <aside class="workspace-card admin-actions-card">
+                <div class="stat-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                <h2>Решение</h2>
+                {% if dispute.decision == "pending" and dispute.order.status == "in_dispute" %}
+                    <p class="item-muted">Выберите итог после проверки переписки, материалов и факта проведения занятия.</p>
+                    <form method="post" action="{% url 'resolve_dispute' dispute.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="decision" value="pay_tutor">
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('Подтвердить проведение урока и списать оплату?')">
+                            <i class="fa-solid fa-check"></i> Оплатить репетитору
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'resolve_dispute' dispute.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="decision" value="refund_student">
+                        <button type="submit" class="btn btn-soft" onclick="return confirm('Отменить урок без списания оплаты?')">
+                            <i class="fa-solid fa-xmark"></i> Отменить без оплаты
+                        </button>
+                    </form>
+                {% else %}
+                    {% if dispute.decision == "pay_tutor" %}
+                        <span class="status-badge status-closed">Оплачен репетитору</span>
+                        <p class="item-muted">Спор закрыт в пользу репетитора.</p>
+                    {% elif dispute.decision == "refund_student" %}
+                        <span class="status-badge status-progress">Отменён без оплаты</span>
+                        <p class="item-muted">Спор закрыт без списания средств с ученика.</p>
+                    {% else %}
+                        <span class="status-badge status-contacted">{{ dispute.order.get_status_display }}</span>
+                        <p class="item-muted">Решение недоступно для текущего статуса урока.</p>
+                    {% endif %}
+                {% endif %}
+            </aside>
+        </section>
+    </main>
+</body>
+</html>
+

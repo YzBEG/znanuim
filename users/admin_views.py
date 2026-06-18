@@ -3,10 +3,12 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Count, Sum
 from django.shortcuts import render, redirect, get_object_or_404
-from communications.models import Conversation, LeadRequest
-from lessons.models import LessonOrder
+from django.urls import reverse
+from django.utils import timezone
+from communications.models import Conversation, LeadRequest, Notification, create_notification
+from lessons.models import Dispute, LessonOrder
 from payments.models import Transaction, WithdrawalRequest
-from payments.services import get_platform_owner_user, get_wallet
+from payments.services import complete_paid_lesson, get_platform_owner_user, get_wallet
 from reviews.models import Review
 from tutors.models import TutorProfile
 from users.models import User
@@ -28,6 +30,7 @@ def admin_dashboard(request):
     platform_owner_wallet = get_wallet(platform_owner)
     platform_income = Transaction.objects.filter(user=platform_owner).aggregate(total=Sum("amount"))["total"] or 0
     recent_platform_transactions = Transaction.objects.filter(user=platform_owner).order_by("-created_at")[:5]
+    disputes_pending = Dispute.objects.filter(decision=Dispute.Decision.PENDING).count()
 
     context = {
         "users_total": User.objects.count(),
@@ -41,6 +44,8 @@ def admin_dashboard(request):
         "orders_pending": order_status_counts.get(LessonOrder.Status.PENDING, 0),
         "orders_confirmed": order_status_counts.get(LessonOrder.Status.CONFIRMED, 0),
         "orders_completed": order_status_counts.get(LessonOrder.Status.COMPLETED, 0),
+        "orders_in_dispute": order_status_counts.get(LessonOrder.Status.IN_DISPUTE, 0),
+        "disputes_pending": disputes_pending,
         "leads_total": LeadRequest.objects.count(),
         "leads_new": lead_status_counts.get("new", 0),
         "leads_in_progress": lead_status_counts.get("in_progress", 0),
@@ -55,8 +60,133 @@ def admin_dashboard(request):
         "recent_tutors": TutorProfile.objects.select_related("user").prefetch_related("subjects").order_by("-id")[:5],
         "recent_leads": LeadRequest.objects.order_by("-created_at")[:5],
         "recent_orders": LessonOrder.objects.select_related("student", "tutor", "slot").order_by("-created_at")[:5],
+        "recent_disputes": Dispute.objects.select_related("order", "order__student", "order__tutor", "order__slot", "initiated_by").order_by("-created_at")[:5],
     }
     return render(request, "custom_admin/admin_dashboard.html", context)
+
+
+@staff_member_required
+def disputes_list(request):
+    """Список спорных уроков для администратора."""
+    status_filter = request.GET.get("status") or ""
+    disputes = Dispute.objects.select_related(
+        "order",
+        "order__student",
+        "order__tutor",
+        "order__slot",
+        "initiated_by",
+    ).order_by("-created_at")
+
+    if status_filter:
+        disputes = disputes.filter(decision=status_filter)
+
+    context = {
+        "disputes": disputes,
+        "status_filter": status_filter,
+        "total_count": Dispute.objects.count(),
+        "pending_count": Dispute.objects.filter(decision=Dispute.Decision.PENDING).count(),
+        "pay_tutor_count": Dispute.objects.filter(decision=Dispute.Decision.PAY_TUTOR).count(),
+        "refund_count": Dispute.objects.filter(decision=Dispute.Decision.REFUND_STUDENT).count(),
+    }
+    return render(request, "custom_admin/disputes.html", context)
+
+
+@staff_member_required
+def dispute_detail(request, dispute_id):
+    """Детальная карточка спора."""
+    dispute = get_object_or_404(
+        Dispute.objects.select_related(
+            "order",
+            "order__student",
+            "order__tutor",
+            "order__slot",
+            "initiated_by",
+        ),
+        id=dispute_id,
+    )
+    return render(request, "custom_admin/dispute_detail.html", {"dispute": dispute})
+
+
+@staff_member_required
+def resolve_dispute(request, dispute_id):
+    """Решение спора: оплатить репетитору или отменить без списания."""
+    dispute = get_object_or_404(
+        Dispute.objects.select_related("order", "order__student", "order__tutor", "order__slot"),
+        id=dispute_id,
+    )
+    order = dispute.order
+
+    if request.method != "POST":
+        return redirect("dispute_detail", dispute_id=dispute.id)
+
+    if dispute.decision != Dispute.Decision.PENDING or order.status != LessonOrder.Status.IN_DISPUTE:
+        messages.info(request, "Этот спор уже обработан.")
+        return redirect("dispute_detail", dispute_id=dispute.id)
+
+    decision = request.POST.get("decision")
+    lesson_time = timezone.localtime(order.slot.start_at).strftime("%d.%m.%Y %H:%M")
+
+    if decision == "pay_tutor":
+        try:
+            complete_paid_lesson(order)
+        except ValueError as error:
+            messages.error(request, f"Не удалось списать оплату: {error}")
+            return redirect("dispute_detail", dispute_id=dispute.id)
+
+        order.status = LessonOrder.Status.COMPLETED
+        order.save(update_fields=["status", "updated_at"])
+        dispute.decision = Dispute.Decision.PAY_TUTOR
+        dispute.resolved_at = timezone.now()
+        dispute.save(update_fields=["decision", "resolved_at"])
+
+        create_notification(
+            recipient=order.student,
+            title="Спор по уроку закрыт",
+            body=f"Администратор подтвердил проведение урока на {lesson_time}. Оплата списана согласно правилам платформы.",
+            url=reverse("student_dashboard"),
+            kind=Notification.Kind.LESSON,
+        )
+        create_notification(
+            recipient=order.tutor,
+            title="Спор по уроку закрыт",
+            body=f"Администратор подтвердил проведение урока на {lesson_time}. Выплата начислена с учётом комиссии платформы.",
+            url=reverse("tutor_dashboard"),
+            kind=Notification.Kind.LESSON,
+        )
+        messages.success(request, "Спор закрыт: урок оплачен репетитору.")
+        return redirect("disputes_list")
+
+    if decision == "refund_student":
+        order.status = LessonOrder.Status.CANCELLED
+        order.cancelled_by = request.user
+        order.cancelled_at = timezone.now()
+        if order.slot_id:
+            order.slot.is_booked = False
+            order.slot.save(update_fields=["is_booked"])
+        order.save(update_fields=["status", "cancelled_by", "cancelled_at", "updated_at"])
+        dispute.decision = Dispute.Decision.REFUND_STUDENT
+        dispute.resolved_at = timezone.now()
+        dispute.save(update_fields=["decision", "resolved_at"])
+
+        create_notification(
+            recipient=order.student,
+            title="Спор по уроку закрыт",
+            body=f"Администратор отменил урок на {lesson_time}. Оплата по нему не списана.",
+            url=reverse("student_dashboard"),
+            kind=Notification.Kind.LESSON,
+        )
+        create_notification(
+            recipient=order.tutor,
+            title="Спор по уроку закрыт",
+            body=f"Администратор отменил урок на {lesson_time}. Выплата по нему не начислена.",
+            url=reverse("tutor_dashboard"),
+            kind=Notification.Kind.LESSON,
+        )
+        messages.success(request, "Спор закрыт: урок отменён без оплаты.")
+        return redirect("disputes_list")
+
+    messages.error(request, "Выберите корректное решение по спору.")
+    return redirect("dispute_detail", dispute_id=dispute.id)
 
 
 @staff_member_required

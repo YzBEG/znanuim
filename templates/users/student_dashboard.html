@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=17">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=22">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -94,7 +94,7 @@
                             <section class="student-tutor-card">
                                 <div class="student-tutor-head">
                                     <div class="lesson-person">
-                                        <img class="lesson-photo" src="{% if group.photo_url %}{{ group.photo_url }}{% else %}https://ui-avatars.com/api/?name={{ group.tutor.get_full_name|default:group.tutor.username|urlencode }}&size=160&background=10367d&color=fff&bold=true{% endif %}" alt="{{ group.tutor.get_full_name|default:group.tutor.username }}">
+                                        <img class="lesson-photo" src="{% if group.photo_url %}{{ group.photo_url }}{% else %}{% static 'images/default-avatar.svg' %}{% endif %}" alt="{{ group.tutor.get_full_name|default:group.tutor.username }}">
                                         <div>
                                             <h3 class="item-title">{{ group.tutor.get_full_name|default:group.tutor.username }}</h3>
                                             <div class="item-line">
@@ -186,3 +186,4 @@
     </script>
 </body>
 </html>
+

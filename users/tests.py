@@ -13,6 +13,42 @@ from users.models import User
 TEMP_MEDIA_ROOT = tempfile.mkdtemp()
 
 
+class RegistrationConsentTests(TestCase):
+    def test_student_registration_requires_personal_data_consent(self):
+        response = self.client.post(
+            reverse("register_student"),
+            {
+                "username": "student_without_consent",
+                "email": "student@example.com",
+                "first_name": "Anna",
+                "last_name": "Ivanova",
+                "phone": "+79000000000",
+                "password1": "StrongPass2026!",
+                "password2": "StrongPass2026!",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username="student_without_consent").exists())
+
+    def test_tutor_registration_requires_personal_data_consent(self):
+        response = self.client.post(
+            reverse("register_tutor"),
+            {
+                "username": "tutor_without_consent",
+                "email": "tutor@example.com",
+                "first_name": "Ivan",
+                "last_name": "Petrov",
+                "phone": "+79000000001",
+                "password1": "StrongPass2026!",
+                "password2": "StrongPass2026!",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username="tutor_without_consent").exists())
+
+
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class TutorProfileEditTests(TestCase):
     @classmethod

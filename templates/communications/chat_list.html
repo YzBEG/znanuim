@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=16">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=22">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -63,7 +63,7 @@
                     {% for conv in conversations %}
                         <a href="{% url 'chat_detail' conv.id %}" class="conversation-card">
                             {% if user.role == 'student' %}
-                                <img src="https://ui-avatars.com/api/?name={{ conv.tutor.get_full_name|default:conv.tutor.username|urlencode }}&size=144&background=10367d&color=fff&bold=true" alt="{{ conv.tutor.get_full_name|default:conv.tutor.username }}">
+                                <img src="{% static 'images/default-avatar.svg' %}" alt="{{ conv.tutor.get_full_name|default:conv.tutor.username }}">
                                 <div class="conversation-body">
                                     <div class="conversation-head">
                                         <h3>{{ conv.tutor.get_full_name|default:conv.tutor.username }}</h3>
@@ -76,7 +76,7 @@
                                     {% endif %}
                                 </div>
                             {% else %}
-                                <img src="https://ui-avatars.com/api/?name={{ conv.student.get_full_name|default:conv.student.username|urlencode }}&size=144&background=10367d&color=fff&bold=true" alt="{{ conv.student.get_full_name|default:conv.student.username }}">
+                                <img src="{% static 'images/default-avatar.svg' %}" alt="{{ conv.student.get_full_name|default:conv.student.username }}">
                                 <div class="conversation-body">
                                     <div class="conversation-head">
                                         <h3>{{ conv.student.get_full_name|default:conv.student.username }}</h3>

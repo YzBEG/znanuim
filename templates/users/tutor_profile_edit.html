@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=18">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=22">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
     <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
 </head>
@@ -60,7 +60,7 @@
                     </div>
 
                     <div class="photo-upload">
-                        <img src="{% if profile.avatar_url %}{{ profile.avatar_url }}{% else %}https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&size=180&background=10367d&color=fff&bold=true{% endif %}" alt="{{ user.get_full_name|default:user.username }}">
+                        <img src="{% if profile.avatar_url %}{{ profile.avatar_url }}{% else %}{% static 'images/default-avatar.svg' %}{% endif %}" alt="{{ user.get_full_name|default:user.username }}">
                         <div>
                             <label>Аватар преподавателя</label>
                             <input type="file" id="photo_file" name="photo_file" accept=".jpg,.jpeg,.png,.webp">
@@ -181,7 +181,7 @@
             <aside class="side-stack">
                 <article class="workspace-card profile-mini">
                     <div class="profile-mini-top">
-                        <img src="{% if profile.avatar_url %}{{ profile.avatar_url }}{% else %}https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username|urlencode }}&size=160&background=10367d&color=fff&bold=true{% endif %}" alt="{{ user.get_full_name|default:user.username }}">
+                        <img src="{% if profile.avatar_url %}{{ profile.avatar_url }}{% else %}{% static 'images/default-avatar.svg' %}{% endif %}" alt="{{ user.get_full_name|default:user.username }}">
                         <div>
                             <h3>{{ user.get_full_name|default:user.username }}</h3>
                             <p>Онлайн-занятия</p>
@@ -199,3 +199,4 @@
     </main>
 </body>
 </html>
+

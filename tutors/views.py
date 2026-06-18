@@ -26,11 +26,21 @@ def _parse_non_negative_decimal(value):
 
 
 def home(request):
+    from reviews.models import Review
     if request.method == "POST":
         messages.success(request, "Спасибо! Заявка принята. Мы свяжемся с вами в ближайшее время.")
         return redirect(reverse("home") + "#lead")
 
-    return render(request, "design/home_redesign.html")
+    return render(
+        request,
+        "design/home_redesign.html",
+        {
+            "home_tutors_count": TutorProfile.objects.filter(
+                verification_status=TutorProfile.VerificationStatus.APPROVED,
+            ).count(),
+            "home_reviews_count": Review.objects.count(),
+        },
+    )
 
 
 def design_home_redesign(request):

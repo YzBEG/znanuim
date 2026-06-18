@@ -1,0 +1,157 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Спорные уроки — Znanium Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/tutor_workspace.css' %}?v=22">
+    <link rel="stylesheet" href="{% static 'css/notifications.css' %}?v=3">
+    <script src="{% static 'js/notifications.js' %}?v=8" defer></script>
+</head>
+<body{% if user.is_authenticated %} data-authenticated="1"{% endif %}>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a href="{% url 'home' %}" class="brand">Znanium Admin</a>
+            <div class="header-actions">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-ghost">Панель</a>
+                <a href="{% url 'disputes_list' %}" class="btn btn-primary">Споры</a>
+                <a href="{% url 'moderation_dashboard' %}" class="btn btn-ghost">Модерация</a>
+                <a href="{% url 'lead_requests' %}" class="btn btn-ghost">Заявки</a>
+                <a href="/admin/" class="btn btn-soft">Django Admin</a>
+                <a href="{% url 'logout' %}" class="btn btn-soft">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace-page">
+        <section class="shell workspace-hero">
+            <div>
+                <span class="student-chip">Спорные уроки</span>
+                <h1>Обработка спорных занятий</h1>
+                <p>Здесь отображаются уроки, по которым ученик не подтвердил проведение или возникло разногласие после занятия.</p>
+            </div>
+        </section>
+
+        <section class="shell workspace-stack">
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="stats-grid moderation-stats">
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                    <span>Всего</span>
+                    <strong>{{ total_count }}</strong>
+                    <small>спорных ситуаций</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <span>Ожидают</span>
+                    <strong>{{ pending_count }}</strong>
+                    <small>нужно решение администратора</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-user-check"></i></div>
+                    <span>Оплачены</span>
+                    <strong>{{ pay_tutor_count }}</strong>
+                    <small>решение в пользу репетитора</small>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-rotate-left"></i></div>
+                    <span>Отменены</span>
+                    <strong>{{ refund_count }}</strong>
+                    <small>без списания с ученика</small>
+                </article>
+            </div>
+
+            <article class="workspace-card">
+                <form method="get" class="lead-filter-form">
+                    <div class="form-field">
+                        <label for="status">Статус</label>
+                        <select id="status" name="status">
+                            <option value="">Все</option>
+                            <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>Ожидают решения</option>
+                            <option value="pay_tutor" {% if status_filter == "pay_tutor" %}selected{% endif %}>Оплачены репетитору</option>
+                            <option value="refund_student" {% if status_filter == "refund_student" %}selected{% endif %}>Отменены без оплаты</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> Фильтр</button>
+                    <a href="{% url 'disputes_list' %}" class="btn btn-soft"><i class="fa-solid fa-rotate-right"></i> Сбросить</a>
+                </form>
+            </article>
+
+            <article class="workspace-card">
+                <div class="section-head">
+                    <div>
+                        <h2>Список споров</h2>
+                        <p>Откройте спор, чтобы изучить урок и принять решение по оплате.</p>
+                    </div>
+                </div>
+
+                {% if disputes %}
+                    <div class="soft-table-wrap">
+                        <table class="soft-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Дата спора</th>
+                                    <th>Урок</th>
+                                    <th>Ученик</th>
+                                    <th>Репетитор</th>
+                                    <th>Сумма</th>
+                                    <th>Статус</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dispute in disputes %}
+                                    <tr>
+                                        <td>#{{ dispute.id }}</td>
+                                        <td>{{ dispute.created_at|date:"d.m.Y H:i" }}</td>
+                                        <td>
+                                            {% if dispute.order.slot %}
+                                                {{ dispute.order.slot.start_at|date:"d.m.Y H:i" }}
+                                            {% else %}
+                                                Урок #{{ dispute.order.id }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ dispute.order.student.get_full_name|default:dispute.order.student.username }}</td>
+                                        <td>{{ dispute.order.tutor.get_full_name|default:dispute.order.tutor.username }}</td>
+                                        <td>{{ dispute.order.price|floatformat:0 }} ₽</td>
+                                        <td>
+                                            {% if dispute.decision == "pending" %}
+                                                <span class="status-badge status-new">Ожидает решения</span>
+                                            {% elif dispute.decision == "pay_tutor" %}
+                                                <span class="status-badge status-closed">Оплачен репетитору</span>
+                                            {% else %}
+                                                <span class="status-badge status-progress">Отменён без оплаты</span>
+                                            {% endif %}
+                                        </td>
+                                        <td><a href="{% url 'dispute_detail' dispute.id %}" class="btn btn-soft">Открыть</a></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-panel">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                        <h3>Споров пока нет</h3>
+                        <p>Когда ученик оспорит проведение занятия, спор появится в этом разделе.</p>
+                    </div>
+                {% endif %}
+            </article>
+        </section>
+    </main>
+</body>
+</html>
+

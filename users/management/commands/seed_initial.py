@@ -78,7 +78,8 @@ class Command(BaseCommand):
                 "review_count": 6,
                 "verification_status": TutorProfile.VerificationStatus.APPROVED,
                 "identity_verified": True,
-                "photo": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=500&q=80",
+                "photo": "",
+                "photo_file": "tutors/photos/demo_tutor_solovev.svg",
             },
         )
         profile.subjects.set(subjects[:3])

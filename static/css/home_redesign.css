@@ -781,27 +781,27 @@ img {
 }
 
 .subject-math {
-  background-image: url("https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=900&q=85");
+  background-image: url("../images/home/subject-math.jpg");
 }
 
 .subject-physics {
-  background-image: url("https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=900&q=85");
+  background-image: url("../images/home/subject-physics.jpg");
 }
 
 .subject-english {
-  background-image: url("https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=900&q=85");
+  background-image: url("../images/home/subject-english.jpg");
 }
 
 .subject-social {
-  background-image: url("https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=900&q=85");
+  background-image: url("../images/home/subject-social.jpg");
 }
 
 .subject-russian {
-  background-image: url("https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=900&q=85");
+  background-image: url("../images/home/subject-russian.jpg");
 }
 
 .subject-code {
-  background-image: url("https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=900&q=85");
+  background-image: url("../images/home/subject-informatics.jpg");
 }
 
 .subject-card strong,

@@ -156,7 +156,7 @@ STORAGES = {
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-SERVE_MEDIA = os.environ.get('DJANGO_SERVE_MEDIA', str(DEBUG)).lower() in {'1', 'true', 'yes', 'on'}
+SERVE_MEDIA = os.environ.get('DJANGO_SERVE_MEDIA', 'True').lower() in {'1', 'true', 'yes', 'on'}
 
 AUTH_USER_MODEL = 'users.User'
 LOGIN_URL = '/accounts/login/'
